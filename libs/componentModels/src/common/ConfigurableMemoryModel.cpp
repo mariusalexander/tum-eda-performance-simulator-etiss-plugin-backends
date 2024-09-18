@@ -14,28 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef SWEVAL_BACKENDS_FACTORY_H
-#define SWEVAL_BACKENDS_FACTORY_H
+#include "models/common/ConfigurableMemoryModel.h"
 
-#include "Channel.h"
-#include "Backend.h"
-
-#include <string>
-
-namespace SwEvalBackends
+ConfigurableMemoryModel::ConfigurableMemoryModel(PerformanceModel* parent_) :
+    ResourceModel("ConfigurableMemoryModel", parent_)
 {
 
-class Factory
+}
+
+int
+ConfigurableMemoryModel::getDelay()
 {
-private:
-  enum var_t {CV32E40P, CVA6, AssemblyTrace, InstructionTrace_RV64, TestCore};
-public:
-  int getVariantHandle(std::string);
-  Channel* getChannel(int);
-  Backend* getPerformanceEstimator(int);
-  Backend* getTracePrinter(int);
-};
-
-} // namespace SwEvalBackends
-
-#endif //SWEVAL_BACKENDS_FACTORY_H
+    return 1;
+}

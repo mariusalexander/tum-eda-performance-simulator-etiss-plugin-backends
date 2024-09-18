@@ -81,7 +81,6 @@ class InstructionModel
 {
 public:
     InstructionModel(InstructionModelSet*, std::string, int, std::function<void(PerformanceModel*)>);
-    ~InstructionModel();
 
     const int typeId;
     const std::string name;

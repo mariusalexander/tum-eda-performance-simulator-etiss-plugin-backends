@@ -38,6 +38,11 @@
 #include "InstructionTrace_RV64_Channel.h"
 #include "InstructionTrace_RV64_Printer.h"
 
+// TODO: remove me
+#include "TestCore_Channel.h"
+#include "TestCore_PerformanceModel.h"
+#include "TestCore_Printer.h"
+
 namespace SwEvalBackends
 {
 
@@ -59,6 +64,10 @@ int Factory::getVariantHandle(std::string var_)
     {
         return InstructionTrace_RV64;
     }
+    if(var_ == "TESTCORE") // TODO: remove me
+    {
+        return TestCore;
+    }
     return -1;
 }
 
@@ -67,6 +76,7 @@ Channel* Factory::getChannel(int var_)
   switch((var_t)var_)
   {
     case CV32E40P: return new CV32E40P_Channel();
+    case TestCore: return new TestCore_Channel();
     case CVA6: return new CVA6_Channel();
     case AssemblyTrace: return new AssemblyTrace_Channel();
     case InstructionTrace_RV64: return new InstructionTrace_RV64_Channel();
@@ -82,6 +92,9 @@ Backend* Factory::getPerformanceEstimator(int var_)
   {
     case CV32E40P:
       perfModel = new CV32E40P_PerformanceModel();
+      break;
+    case TestCore:
+      perfModel = new TestCore_PerformanceModel(); // TODO: remove me
       break;
     case CVA6:
       perfModel = new CVA6_Model(); // TODO: Rename to CVA6_PerformanceModel
@@ -108,6 +121,9 @@ Backend* Factory::getTracePrinter(int var_)
   {
     case CV32E40P:
       printer = new CV32E40P_Printer();
+      break;
+    case TestCore:
+      printer = new TestCore_Printer(); // TODO: remove me
       break;
     case CVA6:
       printer = new CVA6_Printer();

@@ -26,8 +26,8 @@
 class Streamer
 {
 public:
-  Streamer(){};
-  ~Streamer()=default;
+  Streamer() = default;
+  ~Streamer() = default;
 
   void activate(void) { activated = true; };
   bool isActive(void) { return activated; };
@@ -60,7 +60,7 @@ class Backend
 {
  public:
   Backend(): streamer() {};
-  ~Backend()=default;
+  virtual ~Backend() = default;
   
   virtual void connectChannel(Channel*)=0;
   virtual void initialize(void)=0;
