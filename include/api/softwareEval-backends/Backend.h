@@ -23,6 +23,9 @@
 #include <string>
 #include <fstream>
 
+// forward declrations
+namespace etiss { class Configuration; }
+
 class Streamer
 {
 public:
@@ -66,6 +69,12 @@ class Backend
   virtual void initialize(void)=0;
   virtual void execute(void)=0;
   virtual void finalize(void)=0;
+
+  /**
+   * @brief Can be reimplemented to apply a configuration
+   * @param config
+   */
+  virtual void applyConfig(etiss::Configuration&) {}
 
   void activateStreamToCout(void) { streamer.activate(); };
   void activateStreamToFile(std::string, std::string, std::string, int);

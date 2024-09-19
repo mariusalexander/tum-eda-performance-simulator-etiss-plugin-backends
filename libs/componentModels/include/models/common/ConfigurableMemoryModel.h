@@ -25,9 +25,28 @@
 class ConfigurableMemoryModel : public ResourceModel
 {
 public:
-  ConfigurableMemoryModel(PerformanceModel* parent_);
 
-  int getDelay(void) override;
+    ConfigurableMemoryModel(PerformanceModel* parent_);
+
+    /**
+     * @brief Applies memory model configuration
+     * @param config_ Config holding memory values
+     */
+    void applyConfig(etiss::Configuration& config);
+
+    /**
+     * @brief Delay for accessing the current address`
+     * @return Delay
+     */
+    int getDelay(void) override;
+
+    /// pointer to memory
+    /// TODO: more fitting name? Keeping API compatiblity to DCacheModel
+    uint64_t* addr_ptr = nullptr;
+
+private:
+
+    int m_delay = 0;
 
 };
 

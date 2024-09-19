@@ -33,7 +33,8 @@ InstructionModelSet*
 TestCore_PerformanceModel::instructionSet()
 {
     // immediately invoked lambda function
-    // initializes instruction set exactly once and only when this function is called
+    //  initializes the instruction set exactly once and only when
+    //  this function is called
     static InstructionModelSet* ptr = [=](){
         static InstructionModelSet instrSet{"TestCore_InstrModelSet"};
         initInstructionSet(&instrSet);
@@ -115,4 +116,10 @@ TestCore_PerformanceModel::getPrintHeader(void)
     ret_strs << "," << "cyc_pc_mp";
     ret_strs << std::endl;
     return ret_strs.str();
+}
+
+void
+TestCore_PerformanceModel::applyConfig(etiss::Configuration& config)
+{
+    dCacheModel.applyConfig(config);
 }
