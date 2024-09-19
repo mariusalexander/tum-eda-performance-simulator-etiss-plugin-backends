@@ -24,7 +24,19 @@
  */
 class ConfigurableMemoryModel : public ResourceModel
 {
+    static constexpr size_t MAX_LEVEL_COUNT = 5;
 public:
+
+    /// Memory level in a hierarchical memory system (e.g. L1 cache)
+    struct MemoryLevel
+    {
+        /// hit rate
+        float rhit = 1.0;
+        /// access time
+        int tacc = 1;
+        /// level name, used for debugging
+        std::string name;
+    };
 
     ConfigurableMemoryModel(PerformanceModel* parent_);
 
@@ -46,8 +58,17 @@ public:
 
 private:
 
-    int m_delay = 0;
+    /// Memory levels
+    std::array<MemoryLevel, MAX_LEVEL_COUNT> m_levels;
+    /// number of memory levels
+    size_t m_levelCount = 0;
 
+    /**
+     * @brief Registers a memory level and applies its configuration
+     * @param config
+     * @param level
+     */
+    void appendMemoryLevel(etiss::Configuration& config, std::string const& level);
 };
 
 #endif //CONFIGURABLE_MEMORY_MODEL_H

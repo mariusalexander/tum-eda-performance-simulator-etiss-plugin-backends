@@ -19,8 +19,18 @@
 #include "etiss/Misc.h"
 
 #include <iostream>
+#include <random>
+#include <string>
 
+// path to memory configuartion
 #define CONFIG_PATH "plugin.perfEst."
+
+// separator used to parase string list in config file
+constexpr char SEPARATOR = ' ';
+
+// using more robust random distribution
+static std::random_device s_rand;
+static std::uniform_real_distribution<float> s_distribution(0.0, 1.0);
 
 namespace
 {
@@ -66,31 +76,104 @@ std::ostream& operator<<(std::ostream& s, std::map<K, V, R...> const& t)
 ConfigurableMemoryModel::ConfigurableMemoryModel(PerformanceModel* parent_) :
     ResourceModel("ConfigurableMemoryModel", parent_)
 {
+    static_assert(MAX_LEVEL_COUNT > 0, "INVALID MEMORY LEVEL COUNT");
 
-}
-
-void
-ConfigurableMemoryModel::applyConfig(etiss::Configuration& config)
-{
-    std::cout << "Applying memory config: " << config.config() << std::endl;
-
-    m_delay = config.get<int>(CONFIG_PATH "memory.delay", -1);
-    if (m_delay < 0)
-    {
-        std::cout << "WARNING: configuration 'memory.delay' not defined! "
-                     "Defaulting to '0'" << std::endl;
-        m_delay = 0;
-    }
-    else
-    {
-        std::cout << "Using delay of '" << m_delay << "'..." << std::endl;
-    }
-
-    std::cout << std::endl;
+    // seed RNG
+    std::mt19937{s_rand()};
 }
 
 int
 ConfigurableMemoryModel::getDelay()
 {
-    return m_delay;
+    int delay = 0;
+    // iterate over all caches
+    for (size_t idx = 0; idx < m_levelCount; idx++)
+    {
+        MemoryLevel& level = m_levels[idx];
+        delay += level.tacc;
+
+        // simulate cache hit/miss
+        if (level.rhit <= s_distribution(s_rand)) break;
+    }
+    return delay;
+}
+
+void
+ConfigurableMemoryModel::applyConfig(etiss::Configuration& config)
+{
+    std::cout << "Memory config: " << config.config() << std::endl;
+
+    // parse list of memory levels
+    std::string levels = config.get<std::string>(CONFIG_PATH "memory.layout", "");
+
+    auto iter = levels.begin();
+    auto end = levels.end();
+
+    while (iter != end)
+    {
+        auto substrEnd = std::find(iter, end, SEPARATOR);
+        if (iter == substrEnd) break;
+
+        // create substring until separator
+        std::string level{iter, substrEnd};
+
+        iter = substrEnd;
+        if (iter != end)
+        {
+            // iter points to separator -> advance
+            iter++;
+        }
+
+        appendMemoryLevel(config, level);
+    }
+
+    // no memory level added -> use default constructed memory level
+    if (m_levelCount == 0)
+    {
+        std::cout << "WARNING: no memory levels were defined, "
+                     "defaulting to no delay!" << std::endl;
+        m_levelCount = 1;
+    }
+
+    std::cout << std::endl;
+}
+
+void
+ConfigurableMemoryModel::appendMemoryLevel(etiss::Configuration& config,
+                                           std::string const& levelName)
+{
+    std::cout << "Registering memory level '" << levelName << "'..." << std::endl;
+
+    std::string configPath = CONFIG_PATH "memory." + levelName;
+
+    /// taccess
+    auto invalid = std::numeric_limits<unsigned>::max();
+    auto tacc = config.get<unsigned>(configPath + ".tacc", invalid);
+
+    if (tacc == invalid)
+    {
+        std::cout << "WARNING: configuration '" << configPath
+                  << ".tacc' not defined! Aborting." << std::endl;
+        return;
+    }
+
+    /// rhit chance
+    // convert to floating point
+    auto rhitStr = config.get<std::string>(configPath + ".rhit", "");
+    float rhit = atof(rhitStr.c_str());
+
+    if (rhit <= 0.0 || rhit > 1.0)
+    {
+        rhit = 1.0;
+    }
+
+    std::cout << "    tacc: " << tacc << "cc" << std::endl;
+    std::cout << "    rhit: " << rhit * 100 << "%" << std::endl;
+
+    // append memory level
+    MemoryLevel& level = m_levels[m_levelCount];
+    level.rhit = rhit;
+    level.tacc = tacc;
+    level.name = std::move(levelName);
+    m_levelCount++;
 }
