@@ -24,8 +24,8 @@
  */
 class ConfigurableMemoryModel : public ResourceModel
 {
-    static constexpr size_t MAX_LEVEL_COUNT = 5;
 public:
+    static constexpr size_t MAX_LEVEL_COUNT = 5;
 
     /// Memory level in a hierarchical memory system (e.g. L1 cache)
     struct MemoryLevel
@@ -45,7 +45,7 @@ public:
      * @brief Applies memory model configuration
      * @param config_ Config holding memory values
      */
-    void applyConfig(etiss::Configuration& config);
+    void applyConfig(etiss::Configuration& config) override;
 
     /**
      * @brief Delay for accessing the current address`
