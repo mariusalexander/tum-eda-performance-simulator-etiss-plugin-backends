@@ -28,7 +28,7 @@
 // separator used to parase string list in config file
 constexpr char SEPARATOR = ' ';
 
-static std::array<int, 2> s_histogram;
+static std::array<int, ConfigurableMemoryModel::MAX_LEVEL_COUNT> s_histogram;
 
 namespace
 {
@@ -80,7 +80,7 @@ ConfigurableMemoryModel::ConfigurableMemoryModel(PerformanceModel* parent_) :
 ConfigurableMemoryModel::~ConfigurableMemoryModel()
 {
     std::cout << "\nConfigurableMemoryModel Historgram: ";
-    logIter(std::cout, s_histogram.begin(), s_histogram.end(), "[", "]");
+    logIter(std::cout, s_histogram.begin(), s_histogram.begin() + m_levelCount, "[", "]");
     std::cout << std::endl;
 }
 
