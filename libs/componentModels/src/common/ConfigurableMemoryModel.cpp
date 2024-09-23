@@ -28,9 +28,7 @@
 // separator used to parase string list in config file
 constexpr char SEPARATOR = ' ';
 
-// using more robust random distribution
-static std::random_device s_rand;
-static std::uniform_real_distribution<float> s_distribution(0.0, 1.0);
+static std::array<int, 2> s_histogram;
 
 namespace
 {
@@ -77,9 +75,13 @@ ConfigurableMemoryModel::ConfigurableMemoryModel(PerformanceModel* parent_) :
     ResourceModel("ConfigurableMemoryModel", parent_)
 {
     static_assert(MAX_LEVEL_COUNT > 0, "INVALID MEMORY LEVEL COUNT");
+}
 
-    // seed RNG
-    std::mt19937{s_rand()};
+ConfigurableMemoryModel::~ConfigurableMemoryModel()
+{
+    std::cout << "\nConfigurableMemoryModel Historgram: ";
+    logIter(std::cout, s_histogram.begin(), s_histogram.end(), "[", "]");
+    std::cout << std::endl;
 }
 
 int
@@ -87,13 +89,15 @@ ConfigurableMemoryModel::getDelay()
 {
     int delay = 0;
     // iterate over all caches
-    for (size_t idx = 0; idx < m_levelCount; idx++)
+    for (size_t idx = 0; idx < m_levelCount; ++idx)
     {
         MemoryLevel& level = m_levels[idx];
         delay += level.tacc;
 
+        s_histogram[idx]++;
+
         // simulate cache hit/miss
-        if (level.rhit <= s_distribution(s_rand)) break;
+        if (level.rhit > (rand() % 10000) * 0.0001) break;
     }
     return delay;
 }
@@ -143,6 +147,11 @@ ConfigurableMemoryModel::appendMemoryLevel(etiss::Configuration& config,
                                            std::string const& levelName)
 {
     std::cout << "Registering memory level '" << levelName << "'..." << std::endl;
+
+    if (m_levelCount >= m_levels.size())
+    {
+        throw std::runtime_error("ConfigurableMemoryModel::m_levels is out of memory");
+    }
 
     std::string configPath = CONFIG_PATH "memory." + levelName;
 

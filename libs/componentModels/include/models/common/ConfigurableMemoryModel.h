@@ -39,6 +39,7 @@ public:
     };
 
     ConfigurableMemoryModel(PerformanceModel* parent_);
+    ~ConfigurableMemoryModel() override;
 
     /**
      * @brief Applies memory model configuration
