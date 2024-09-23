@@ -16,7 +16,7 @@
 
 // TODO: Hand-written as a proof of concept
 
-#ifndef SWEVAL_BACKENDS_CVA6_PERFORMACNE_MODEL_H
+#ifndef SWEVAL_BACKENDS_CVA6_PERFORMANCE_MODEL_H
 #define SWEVAL_BACKENDS_CVA6_PERFORMANCE_MODEL_H
 
 #include <stdbool.h>

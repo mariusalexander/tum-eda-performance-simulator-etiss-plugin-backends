@@ -25,7 +25,7 @@ class Channel
 public:
 
     Channel() { instrCnt = 0; };
-    ~Channel() = default;
+    virtual ~Channel() = default;
 
     uint64_t instrCnt;
     uint64_t typeId [100];

@@ -29,6 +29,9 @@
 
 #include <iostream> // TODO: For debug. Remove
 
+// forward declrations
+namespace etiss { class Configuration; }
+
 struct stage
 {
     uint64_t cnt = 0;
@@ -55,6 +58,13 @@ public:
     virtual uint64_t getCycleCount(void) = 0;
     virtual std::string getPipelineStream(void) = 0;
     virtual std::string getPrintHeader(void) = 0; 
+
+    /**
+     * @brief Can be reimplemented to apply a configuration to the performance
+     * model
+     * @param config
+     */
+    virtual void applyConfig(etiss::Configuration&) {}
   
     int instrIndex; // TODO: Make protected, with ConnectorModel as a friend?
 
@@ -81,7 +91,6 @@ class InstructionModel
 {
 public:
     InstructionModel(InstructionModelSet*, std::string, int, std::function<void(PerformanceModel*)>);
-    ~InstructionModel();
 
     const int typeId;
     const std::string name;

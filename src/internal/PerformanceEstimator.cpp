@@ -74,3 +74,10 @@ void PerformanceEstimator::finalize(void)
 
   streamer.closeStream();
 }
+
+void
+PerformanceEstimator::applyConfig(etiss::Configuration& config_)
+{
+    // forward config to performance model
+    perfModel_ptr->applyConfig(config_);
+}
