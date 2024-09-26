@@ -19,16 +19,9 @@
 #include "etiss/Misc.h"
 
 #include <iostream>
-#include <random>
 #include <string>
-
-// path to memory configuartion
-#define CONFIG_PATH "plugin.perfEst."
-
-// separator used to parase string list in config file
-constexpr char SEPARATOR = ' ';
-
-static std::array<int, ConfigurableMemoryModel::MAX_LEVEL_COUNT> s_histogram;
+#include <cmath>
+#include <cassert>
 
 namespace
 {
@@ -69,35 +62,152 @@ std::ostream& operator<<(std::ostream& s, std::map<K, V, R...> const& t)
     return s;
 }
 
+/**
+ * @brief
+ */
+template<typename T>
+bool loadFromConfig(etiss::Configuration& config, std::string const& path, T& value, T const& default_ = {})
+{
+    value = config.get<size_t>(path, T{});
+    if (value == T{})
+    {
+        std::cout << "WARNING: configuration '" << path
+                  << "' not defined!" << std::endl;
+        value = default_;
+        return false;
+    }
+    return true;
+}
+
 } // namespace
+
+bool
+ConfigurableCache::applyConfig(etiss::Configuration& config,
+                               std::string const& configPath)
+{
+    bool success = true;
+    success &= loadFromConfig(config, configPath + ".nblocks", m_nblocks);
+    success &= loadFromConfig(config, configPath + ".nways", m_nways);
+    success &= loadFromConfig(config, configPath + ".delay.notCachable", m_delay.notCachable);
+    success &= loadFromConfig(config, configPath + ".delay.cacheMiss", m_delay.cacheMiss);
+    success &= loadFromConfig(config, configPath + ".delay.cacheHit", m_delay.cacheHit);
+
+    if (!success)
+    {
+        std::cout << "ERROR: Cache specifications are invalid!" << std::endl;
+        return false;
+    }
+
+    // not critical
+    loadFromConfig(config, configPath + ".blockSize", m_blockSize, (size_t)1);
+    loadFromConfig(config, configPath + ".addrspace.lower", m_addrSpace.lower, (uint64_t)0x0);
+    loadFromConfig(config, configPath + ".addrspace.upper", m_addrSpace.upper, std::numeric_limits<uint64_t>::max());
+    loadFromConfig(config, configPath + ".delay.notCachable", m_delay.notCachable);
+    loadFromConfig(config, configPath + ".delay.cacheReplacement", m_delay.cacheReplacement);
+
+    if (m_addrSpace.lower > m_addrSpace.upper)
+    {
+        std::cout << "ERROR: invalid address space: 0x" << std::hex
+                  << m_addrSpace.lower << " - 0x" << m_addrSpace.upper << std::dec
+                  << std::endl;
+        return false;
+    }
+
+    m_offsetBits = 2 + // offset for byte index
+                   ceil(log2(m_blockSize)); // offset for word index
+    m_indexBits = ceil(log2(m_nblocks));
+
+    std::cout << "Offset-bits: " << m_offsetBits << ", Index-bits:" << m_indexBits << std::endl;
+
+    // allocate tag memory
+    size_t size = m_nblocks * m_nways;
+    m_tagCache.resize(size);
+
+    return success;
+}
+
+ConfigurableCache::ConfigurableCache(std::string name) :
+    m_name(std::move(name))
+{ }
+
+
+bool
+ConfigurableCache::fetch(uint64_t addr, int& delay)
+{
+    if (!m_addrSpace.isCachable(addr))
+    {
+        // not cachable
+        delay += m_delay.notCachable;
+        return false;
+    }
+    uint64_t tag   =  addr >> (m_offsetBits + m_indexBits);
+    uint64_t index = (addr >> m_offsetBits) & ~(tag << m_indexBits);
+
+    assert(index < m_nblocks);
+
+    size_t baseIdx  = index * m_nways;
+
+    for(size_t way_i = 0; way_i < m_nways; ++way_i)
+    {
+        size_t srcIndex = baseIdx + way_i;
+        if (m_tagCache[srcIndex].tag == tag &&
+            m_tagCache[srcIndex].isValid())
+        {
+            // Cache hit
+            delay += m_delay.cacheHit;
+            // TODO: update cache entries (e.g. access time)
+            return true;
+        }
+    }
+
+    // cache miss
+    delay += m_delay.cacheMiss;
+
+    // cache replacement
+    delay += m_delay.cacheReplacement;
+
+    size_t idx = std::numeric_limits<size_t>::max();
+
+    for(size_t way_i = 0; way_i < m_nways; ++way_i)
+    {
+        size_t srcIndex = baseIdx + way_i;
+        if (!m_tagCache[srcIndex].isValid())
+        {
+            idx = srcIndex;
+            break;
+        }
+    }
+
+    // force eviction
+    if (idx == std::numeric_limits<size_t>::max())
+    {
+        static uint8_t shift_state = 0;
+        uint8_t shift_in = ~(((shift_state & 0x80) >> 7) ^ ((shift_state & 0x08) >> 3) ^ ((shift_state & 0x04) >> 2) ^ ((shift_state & 0x02) >> 1));
+        shift_state = (shift_state << 1) | shift_in;
+        idx = baseIdx + (shift_state & (m_nways - 1));
+    }
+
+    m_tagCache[idx].tag = tag;
+    m_tagCache[idx].flags &= ~Invalid;
+    return false;
+}
 
 ConfigurableMemoryModel::ConfigurableMemoryModel(PerformanceModel* parent_) :
     ResourceModel("ConfigurableMemoryModel", parent_)
-{
-    static_assert(MAX_LEVEL_COUNT > 0, "INVALID MEMORY LEVEL COUNT");
-}
-
-ConfigurableMemoryModel::~ConfigurableMemoryModel()
-{
-    std::cout << "\nConfigurableMemoryModel Historgram: ";
-    logIter(std::cout, s_histogram.begin(), s_histogram.begin() + m_levelCount, "[", "]");
-    std::cout << std::endl;
-}
+{ }
 
 int
 ConfigurableMemoryModel::getDelay()
 {
     int delay = 0;
-    // iterate over all caches
-    for (size_t idx = 0; idx < m_levelCount; ++idx)
+
+    for (size_t idx = 0; idx < m_cacheCount; ++idx)
     {
-        MemoryLevel& level = m_levels[idx];
-        delay += level.tacc;
+        // access cache
+        ConfigurableCache& cache = m_caches[idx];
 
-        s_histogram[idx]++;
-
-        // simulate cache hit/miss
-        if (level.rhit > (rand() % 10000) * 0.0001) break;
+        bool hit = cache.fetch(addr_ptr[getInstrIndex()], delay);
+        if (hit) break;
     }
     return delay;
 }
@@ -105,10 +215,13 @@ ConfigurableMemoryModel::getDelay()
 void
 ConfigurableMemoryModel::applyConfig(etiss::Configuration& config)
 {
+    // separator used to parase string list in config file
+    constexpr char SEPARATOR = ' ';
+
     std::cout << "Memory config: " << config.config() << std::endl;
 
     // parse list of memory levels
-    std::string levels = config.get<std::string>(CONFIG_PATH "memory.layout", "");
+    std::string levels = config.get<std::string>("plugin.perfEst.memory.layout", {});
 
     auto iter = levels.begin();
     auto end = levels.end();
@@ -119,70 +232,45 @@ ConfigurableMemoryModel::applyConfig(etiss::Configuration& config)
         if (iter == substrEnd) break;
 
         // create substring until separator
-        std::string level{iter, substrEnd};
+        std::string cacheName{iter, substrEnd};
 
         iter = substrEnd;
-        if (iter != end)
-        {
-            // iter points to separator -> advance
-            iter++;
-        }
 
-        appendMemoryLevel(config, level);
+        // iter points to separator -> advance
+        while (iter != end && *iter == SEPARATOR) iter++;
+
+        registerCache(config, cacheName);
     }
 
-    // no memory level added -> use default constructed memory level
-    if (m_levelCount == 0)
+    // no cache added -> use default constructed memory level
+    if (m_cacheCount == 0)
     {
-        std::cout << "WARNING: no memory levels were defined, "
-                     "defaulting to no delay!" << std::endl;
-        m_levelCount = 1;
+        std::cout << "WARNING: no caches were registered!" << std::endl;
     }
 
     std::cout << std::endl;
 }
 
 void
-ConfigurableMemoryModel::appendMemoryLevel(etiss::Configuration& config,
-                                           std::string const& levelName)
+ConfigurableMemoryModel::registerCache(etiss::Configuration& config,
+                                       std::string const& cacheName)
 {
-    std::cout << "Registering memory level '" << levelName << "'..." << std::endl;
+    std::cout << "Registering cache '" << cacheName << "'..." << std::endl;
 
-    if (m_levelCount >= m_levels.size())
+    if (m_cacheCount >= m_caches.size())
     {
         throw std::runtime_error("ConfigurableMemoryModel::m_levels is out of memory");
     }
 
-    std::string configPath = CONFIG_PATH "memory." + levelName;
+    std::string configPath = "plugin.perfEst.memory." + cacheName;
 
-    /// taccess
-    auto invalid = std::numeric_limits<unsigned>::max();
-    auto tacc = config.get<unsigned>(configPath + ".tacc", invalid);
+    // setup cache
+    ConfigurableCache cache{cacheName};
+    bool success = cache.applyConfig(config, configPath);
+    if (!success) return;
 
-    if (tacc == invalid)
-    {
-        std::cout << "WARNING: configuration '" << configPath
-                  << ".tacc' not defined! Aborting." << std::endl;
-        return;
-    }
-
-    /// rhit chance
-    // convert to floating point
-    auto rhitStr = config.get<std::string>(configPath + ".rhit", "");
-    float rhit = atof(rhitStr.c_str());
-
-    if (rhit <= 0.0 || rhit > 1.0)
-    {
-        rhit = 1.0;
-    }
-
-    std::cout << "    tacc: " << tacc << "cc" << std::endl;
-    std::cout << "    rhit: " << rhit * 100 << "%" << std::endl;
-
-    // append memory level
-    MemoryLevel& level = m_levels[m_levelCount];
-    level.rhit = rhit;
-    level.tacc = tacc;
-    level.name = std::move(levelName);
-    m_levelCount++;
+    // append cache
+    m_caches[m_cacheCount] = std::move(cache);
+    m_cacheCount++;
 }
+

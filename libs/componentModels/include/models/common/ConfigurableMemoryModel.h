@@ -19,27 +19,101 @@
 
 #include "PerformanceModel.h"
 
+#include <vector>
+
+class ConfigurableCache
+{
+public:
+
+    ConfigurableCache(std::string name = {});
+
+    bool fetch(uint64_t address, int& delay);
+
+    /**
+     * @brief applyConfig
+     * @param config
+     * @param configPath Config intern path to cache specific settings
+     * @return
+     */
+    bool applyConfig(etiss::Configuration& config,
+                     std::string const& configPath);
+
+    inline std::string const& name() const { return m_name; }
+
+private:
+
+    /// Status flags of a cache entry
+    enum StatusFlag : unsigned
+    {
+        NoFlag = 0,
+        Invalid = 1 << 0,
+        // TODO: Dirty Flag? Coherency Flags?
+    };
+    using StatusFlags = unsigned;
+
+    /// Cache entry
+    struct CacheEntry
+    {
+        uint64_t tag = 0x0;
+        StatusFlags flags = Invalid;
+
+        constexpr inline bool isValid() const
+        {
+            return !(flags & Invalid);
+        }
+    };
+
+    /// Helper struct to organize delays of cache actions
+    struct Delays
+    {
+        int notCachable = 1, // address is not cachable
+            cacheMiss   = 1, // address not in cache
+            cacheHit    = 1, // address in cache (default cache delay)
+            cacheReplacement = 1; // delay to replace entry
+    };
+
+    /// Helper struct to denote cachable address space
+    struct AddressSpace
+    {
+        uint64_t lower = 0x0; // inclusive
+        uint64_t upper = 0x0; // not inclusive
+
+        /// Whether the address is cachable
+        inline bool isCachable(uint64_t addr) const
+        {
+            return addr >= lower && addr < upper;
+        }
+    };
+
+    /// name of cache level (non-functional member)
+    std::string m_name{};
+    /// cachable address space
+    AddressSpace m_addrSpace{};
+    /// number of ways for n-way set associative caches
+    size_t m_nways = 1;
+    /// number of lines or blocks (n-ways not accounted for)
+    size_t m_nblocks = 1;
+    /// number of words per line or block (n-ways not accounted for)
+    size_t m_blockSize = 1;
+
+    uint64_t m_offsetBits = 0;
+    uint64_t m_indexBits  = 1;
+    /// delays for cache actions
+    Delays m_delay;
+    /// tag cache memory (allocated once at runtime)
+    std::vector<CacheEntry> m_tagCache;
+};
+
 /**
- * @brief Memory model with configurable delay.
+ * @brief Configurable memory model.
  */
 class ConfigurableMemoryModel : public ResourceModel
 {
-public:
-    static constexpr size_t MAX_LEVEL_COUNT = 5;
+    static constexpr size_t MAX_CACHE_COUNT = 5;
 
-    /// Memory level in a hierarchical memory system (e.g. L1 cache)
-    struct MemoryLevel
-    {
-        /// hit rate
-        float rhit = 1.0;
-        /// access time
-        int tacc = 1;
-        /// level name, used for debugging
-        std::string name;
-    };
+public:
 
     ConfigurableMemoryModel(PerformanceModel* parent_);
-    ~ConfigurableMemoryModel() override;
 
     /**
      * @brief Applies memory model configuration
@@ -60,16 +134,16 @@ public:
 private:
 
     /// Memory levels
-    std::array<MemoryLevel, MAX_LEVEL_COUNT> m_levels;
+    std::array<ConfigurableCache, MAX_CACHE_COUNT> m_caches;
     /// number of memory levels
-    size_t m_levelCount = 0;
+    size_t m_cacheCount = 0;
 
     /**
      * @brief Registers a memory level and applies its configuration
      * @param config
-     * @param level
+     * @param cacheName
      */
-    void appendMemoryLevel(etiss::Configuration& config, std::string const& level);
+    void registerCache(etiss::Configuration& config, std::string const& cacheName);
 };
 
 #endif //CONFIGURABLE_MEMORY_MODEL_H
