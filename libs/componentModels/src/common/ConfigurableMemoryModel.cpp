@@ -19,6 +19,7 @@
 #include "etiss/Misc.h"
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <cmath>
 #include <cassert>
@@ -79,18 +80,68 @@ bool loadFromConfig(etiss::Configuration& config, std::string const& path, T& va
     return true;
 }
 
+inline bool
+isInCache(cmm::CacheBlock& block, uint64_t tag)
+{
+    for (cmm::CacheEntry const& entry : block)
+    {
+        if (entry.tag == tag && entry.isValid())
+        {
+            // TODO: update cache entries (e.g. access time)
+            return true;
+        }
+    }
+    return false;
+}
+
+inline cmm::CacheEntry*
+findInvalidEntry(cmm::CacheBlock& block)
+{
+    // replace invalid entry
+    for (cmm::CacheEntry& entry : block)
+    {
+        if (!entry.isValid())
+        {
+            return &entry;
+        }
+    }
+    return nullptr;
+}
+
 } // namespace
 
+void
+cmm::TagMemory::resize(size_type ways, size_type blocks, size_type blockSize)
+{
+    constexpr size_t wordSize = 4; // in bytes
+
+    m_ways = ways;
+    m_blocks = blocks;
+    m_blockSize = blockSize;
+
+    m_data.resize(ways * blocks);
+
+    m_offsetBits = ceil(log2(wordSize)) +   // offset to index byte in a word
+                   ceil(log2(m_blockSize)); // offset to index word in block
+    m_indexBits  = ceil(log2(m_blocks));    // index for blocks
+
+    std::cout << "INFO: "
+              << "allocated tag memory: " << blocks
+              << " lines x " << ways << " ways"
+              << " (index-bits: " << m_indexBits
+              << ", offset-bits: " << m_offsetBits <<  ")" << std::endl;
+}
+
 bool
-ConfigurableCache::applyConfig(etiss::Configuration& config,
-                               std::string const& configPath)
+cmm::Cache::applyConfig(etiss::Configuration& config,
+                        std::string const& configPath)
 {
     bool success = true;
+    size_t m_nblocks, m_nways, m_blockSize;
     success &= loadFromConfig(config, configPath + ".nblocks", m_nblocks);
     success &= loadFromConfig(config, configPath + ".nways", m_nways);
-    success &= loadFromConfig(config, configPath + ".delay.notCachable", m_delay.notCachable);
-    success &= loadFromConfig(config, configPath + ".delay.cacheMiss", m_delay.cacheMiss);
-    success &= loadFromConfig(config, configPath + ".delay.cacheHit", m_delay.cacheHit);
+    success &= loadFromConfig(config, configPath + ".delay.cacheMiss", m_cacheMissDelay);
+    success &= loadFromConfig(config, configPath + ".delay.cacheHit", m_cacheHitDelay);
 
     if (!success)
     {
@@ -100,95 +151,78 @@ ConfigurableCache::applyConfig(etiss::Configuration& config,
 
     // not critical
     loadFromConfig(config, configPath + ".blockSize", m_blockSize, (size_t)1);
-    loadFromConfig(config, configPath + ".addrspace.lower", m_addrSpace.lower, (uint64_t)0x0);
-    loadFromConfig(config, configPath + ".addrspace.upper", m_addrSpace.upper, std::numeric_limits<uint64_t>::max());
-    loadFromConfig(config, configPath + ".delay.notCachable", m_delay.notCachable);
-    loadFromConfig(config, configPath + ".delay.cacheReplacement", m_delay.cacheReplacement);
-
-    if (m_addrSpace.lower > m_addrSpace.upper)
-    {
-        std::cout << "ERROR: invalid address space: 0x" << std::hex
-                  << m_addrSpace.lower << " - 0x" << m_addrSpace.upper << std::dec
-                  << std::endl;
-        return false;
-    }
-
-    m_offsetBits = 2 + // offset for byte index
-                   ceil(log2(m_blockSize)); // offset for word index
-    m_indexBits = ceil(log2(m_nblocks));
-
-    std::cout << "Offset-bits: " << m_offsetBits << ", Index-bits:" << m_indexBits << std::endl;
 
     // allocate tag memory
-    size_t size = m_nblocks * m_nways;
-    m_tagCache.resize(size);
+    m_tagCache.resize(m_nways, m_nblocks, m_blockSize);
+
+    // evict strategy
+    uint8_t shift_state = 0;
+    const size_t ways = m_tagCache.ways() - 1;
+
+    auto lfsr = [shift_state, ways](cmm::CacheBlock& block) mutable -> cmm::CacheEntry* {
+        uint8_t shift_in = ~(((shift_state & 0x80) >> 7) ^
+                             ((shift_state & 0x08) >> 3) ^
+                             ((shift_state & 0x04) >> 2) ^
+                             ((shift_state & 0x02) >> 1));
+        shift_state = (shift_state << 1) | shift_in;
+        return block.begin() + (shift_state & ways);
+    };
+    m_evictStrategy = lfsr;
 
     return success;
 }
 
-ConfigurableCache::ConfigurableCache(std::string name) :
+cmm::Cache::Cache(std::string name) :
     m_name(std::move(name))
 { }
 
+cmm::Cache::~Cache()
+{
+    uint total = t_hits + t_misses;
+    if (total == 0) return;
+
+    std::cout << m_name << " Cache Performance:" "\n "
+              << t_hits      << " cache hits ("
+              << std::setprecision(4) << (t_hits * 100.0) / total         << "%)" "\n "
+              << t_evictions << " evictions ("
+              << std::setprecision(4) << (t_evictions * 100.0) / t_misses << "%) of "
+              << t_misses    << " cache misses ("
+              << std::setprecision(4) << (t_misses * 100.0) / total       << "%)"
+              << std::endl;
+}
 
 bool
-ConfigurableCache::fetch(uint64_t addr, int& delay)
+cmm::Cache::fetch(uint64_t addr, int& delay)
 {
-    if (!m_addrSpace.isCachable(addr))
+    uint64_t tag   = m_tagCache.getTag(addr);
+    uint64_t index = m_tagCache.getBlockIndex(addr);
+
+    cmm::CacheBlock block = m_tagCache.getBlock(index);
+
+    if (isInCache(block, tag))
     {
-        // not cachable
-        delay += m_delay.notCachable;
-        return false;
-    }
-    uint64_t tag   =  addr >> (m_offsetBits + m_indexBits);
-    uint64_t index = (addr >> m_offsetBits) & ~(tag << m_indexBits);
-
-    assert(index < m_nblocks);
-
-    size_t baseIdx  = index * m_nways;
-
-    for(size_t way_i = 0; way_i < m_nways; ++way_i)
-    {
-        size_t srcIndex = baseIdx + way_i;
-        if (m_tagCache[srcIndex].tag == tag &&
-            m_tagCache[srcIndex].isValid())
-        {
-            // Cache hit
-            delay += m_delay.cacheHit;
-            // TODO: update cache entries (e.g. access time)
-            return true;
-        }
+        // Cache hit
+        delay += m_cacheHitDelay;
+        t_hits++;
+        return true;
     }
 
     // cache miss
-    delay += m_delay.cacheMiss;
+    delay += m_cacheMissDelay;
+    t_misses++;
 
-    // cache replacement
-    delay += m_delay.cacheReplacement;
+    // replace entry
+    cmm::CacheEntry* entry = findInvalidEntry(block);
 
-    size_t idx = std::numeric_limits<size_t>::max();
-
-    for(size_t way_i = 0; way_i < m_nways; ++way_i)
+    if (!entry)
     {
-        size_t srcIndex = baseIdx + way_i;
-        if (!m_tagCache[srcIndex].isValid())
-        {
-            idx = srcIndex;
-            break;
-        }
+        t_evictions++;
+        entry = m_evictStrategy(block);
     }
 
-    // force eviction
-    if (idx == std::numeric_limits<size_t>::max())
-    {
-        static uint8_t shift_state = 0;
-        uint8_t shift_in = ~(((shift_state & 0x80) >> 7) ^ ((shift_state & 0x08) >> 3) ^ ((shift_state & 0x04) >> 2) ^ ((shift_state & 0x02) >> 1));
-        shift_state = (shift_state << 1) | shift_in;
-        idx = baseIdx + (shift_state & (m_nways - 1));
-    }
+    entry->tag = tag;
+    entry->setFlag(cmm::Invalid, false);
 
-    m_tagCache[idx].tag = tag;
-    m_tagCache[idx].flags &= ~Invalid;
     return false;
 }
 
@@ -199,14 +233,22 @@ ConfigurableMemoryModel::ConfigurableMemoryModel(PerformanceModel* parent_) :
 int
 ConfigurableMemoryModel::getDelay()
 {
+    uint64_t addr = addr_ptr[getInstrIndex()];
+
+    // not cachable
+    if (!m_addrSpace.isCachable(addr))
+    {
+        return m_notCachableDelay;
+    }
+
     int delay = 0;
 
     for (size_t idx = 0; idx < m_cacheCount; ++idx)
     {
         // access cache
-        ConfigurableCache& cache = m_caches[idx];
+        cmm::Cache& cache = m_caches[idx];
 
-        bool hit = cache.fetch(addr_ptr[getInstrIndex()], delay);
+        bool hit = cache.fetch(addr, delay);
         if (hit) break;
     }
     return delay;
@@ -248,6 +290,19 @@ ConfigurableMemoryModel::applyConfig(etiss::Configuration& config)
         std::cout << "WARNING: no caches were registered!" << std::endl;
     }
 
+    loadFromConfig(config, "plugin.perfEst.memory.addrspace.lower", m_addrSpace.lower, (uint64_t)0x0);
+    loadFromConfig(config, "plugin.perfEst.memory.addrspace.upper", m_addrSpace.upper, std::numeric_limits<uint64_t>::max());
+    loadFromConfig(config, "plugin.perfEst.memory.delay.notCachable", m_notCachableDelay);
+
+    if (m_addrSpace.lower > m_addrSpace.upper)
+    {
+        std::stringstream ss;
+        ss << "invalid address space: 0x" << std::hex
+           << m_addrSpace.lower << " - 0x" << m_addrSpace.upper;
+
+        throw std::runtime_error(ss.str());
+    }
+
     std::cout << std::endl;
 }
 
@@ -265,7 +320,7 @@ ConfigurableMemoryModel::registerCache(etiss::Configuration& config,
     std::string configPath = "plugin.perfEst.memory." + cacheName;
 
     // setup cache
-    ConfigurableCache cache{cacheName};
+    cmm::Cache cache{cacheName};
     bool success = cache.applyConfig(config, configPath);
     if (!success) return;
 
@@ -273,4 +328,3 @@ ConfigurableMemoryModel::registerCache(etiss::Configuration& config,
     m_caches[m_cacheCount] = std::move(cache);
     m_cacheCount++;
 }
-
