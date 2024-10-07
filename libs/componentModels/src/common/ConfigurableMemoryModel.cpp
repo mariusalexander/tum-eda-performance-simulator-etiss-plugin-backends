@@ -212,12 +212,7 @@ cmm::Cache::update(CacheBlock block,
                    CacheEntry& entry)
 {
     // TODO: update cache entry/block
-}
-
-void
-cmm::Cache::writeback(CacheEntry& entry)
-{
-    // TODO: perform writeback if necessary
+    entry.t_accesses++;
 }
 
 void

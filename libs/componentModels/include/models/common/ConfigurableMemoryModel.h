@@ -31,6 +31,7 @@ namespace cmm
 enum StatusFlag : unsigned
 {
     NoFlag = 0,
+    /// cache entry is invalid -> entry must be fetched to access
     Invalid = 1 << 0,
     // TODO: Dirty Flag? Coherency Flags?
 };
@@ -42,16 +43,21 @@ struct CacheEntry
     uint64_t tag = 0x0;
     StatusFlags flags = Invalid;
 
+    /// checks whether the cache entry is valid
     constexpr inline bool isValid() const
     {
         return !(flags & Invalid);
     }
 
+    /// sets the given flag for the cache entry
     constexpr inline void setFlag(StatusFlag flag, bool enable = true)
     {
         enable ? flags |=  flag :
                  flags &= ~flag;
     }
+
+    // temporaries (for debugging/statistics)
+    unsigned t_accesses = 0;
 };
 
 /// Cache block/line which holds multiple cache entries
@@ -62,7 +68,9 @@ struct CacheBlock
     /// end of range
     CacheEntry* end_{};
 
+    /// begin iterator
     CacheEntry* begin() { return begin_; }
+    /// end iterator
     CacheEntry* end() { return end_; }
 
     /**
@@ -107,6 +115,7 @@ public:
     using iterator = typename container_type::iterator;
     using const_iterator = typename container_type::const_iterator;
 
+    /// allocates the tag memory for the given layout
     void resize(size_type ways, size_type blocks, size_type blockSize);
 
     /// returns number of ways per block
@@ -116,15 +125,32 @@ public:
     /// returns number of words per block
     size_type blockSize() const { return m_blockSize; }
 
+    /**
+     * @brief Extracts the tag part of the address
+     * @param addr Memory address
+     * @return Tag part
+     */
     inline uint64_t getTag(uint64_t addr) const
     {
         return addr >> (m_offsetBits + m_indexBits);
     }
+
+    /**
+     * @brief Extracts the index part of the address used to index the
+     * cache block.
+     * @param addr Memory address
+     * @return Index part
+     */
     inline uint64_t getBlockIndex(uint64_t addr) const
     {
         return (addr >> m_offsetBits) & ~(getTag(addr) << m_indexBits);
     }
 
+    /**
+     * @brief Returns the cache block of the given block index
+     * @param index Index part
+     * @return Cache block (#entries-per-block == #ways)
+     */
     inline CacheBlock getBlock(uint64_t index)
     {
         size_t baseIdx = index * m_ways;
@@ -134,6 +160,7 @@ public:
         };
     }
 
+    /// whether tag memory is empty (not allocated)
     inline bool empty() const { return m_data.empty(); }
 
 private:
@@ -154,7 +181,7 @@ struct AddressSpace
     uint64_t lower = 0x0; // inclusive
     uint64_t upper = 0x0; // not inclusive
 
-    /// Whether the address is cachable
+    /// Returns whether the address is cachable
     inline bool isCachable(uint64_t addr) const
     {
         return addr >= lower && addr < upper;
@@ -186,8 +213,16 @@ public:
           EvictionStrategy evictionStrategy);
     ~Cache();
 
+    /**
+     * @brief Performs a fetch and updates the delay parameter as required.
+     * Returns whether the cache had a cache hit or miss.
+     * @param address Memory address to fetch
+     * @param delay Delay in clock cycles
+     * @return Cache hit (true) or miss (false)
+     */
     bool fetch(uint64_t address, int& delay);
 
+    /// Returns the name of the cache (non-functional property)
     inline std::string const& name() const { return m_name; }
 
 private:
@@ -203,11 +238,25 @@ private:
     /// strategy to evict entry
     EvictionStrategy m_evictStrategy{};
 
+    /**
+     * @brief Updates the status of the cache entry/block (e.g. access times)
+     * @param block Block that holds the accessed entry
+     * @param entry Entry that was accessed
+     */
     void update(CacheBlock block,
                 CacheEntry& entry);
 
-    void writeback(CacheEntry& entry);
+    void writeback(CacheEntry& entry)
+    {
+        // TODO: perform writeback if necessary, requires write-back delay?
+    }
 
+    /**
+     * @brief Replaces an entry in the cache block. May perform an eviction if
+     * necessary.
+     * @param block Block to find and replace an entry in
+     * @param tag Tag to store in cache entry
+     */
     void replace(CacheBlock block,
                  uint64_t tag);
 
@@ -233,7 +282,7 @@ public:
     void applyConfig(etiss::Configuration& config) override;
 
     /**
-     * @brief Delay for accessing the current address`
+     * @brief Delay for accessing the current address
      * @return Delay
      */
     int getDelay(void) override;
