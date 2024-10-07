@@ -80,35 +80,41 @@ bool loadFromConfig(etiss::Configuration& config, std::string const& path, T& va
     return true;
 }
 
-inline bool
-isInCache(cmm::CacheBlock& block, uint64_t tag)
-{
-    for (cmm::CacheEntry const& entry : block)
-    {
-        if (entry.tag == tag && entry.isValid())
-        {
-            // TODO: update cache entries (e.g. access time)
-            return true;
-        }
-    }
-    return false;
-}
-
-inline cmm::CacheEntry*
-findInvalidEntry(cmm::CacheBlock& block)
-{
-    // replace invalid entry
-    for (cmm::CacheEntry& entry : block)
-    {
-        if (!entry.isValid())
-        {
-            return &entry;
-        }
-    }
-    return nullptr;
-}
-
 } // namespace
+
+namespace eviction_strategy
+{
+
+inline auto lfsr(const cmm::TagMemory& tagMemory)
+{
+    // evict strategy
+    uint8_t shift_state = 0;
+    const size_t ways = tagMemory.ways() - 1;
+
+    return [shift_state, ways](cmm::CacheBlock& block) mutable -> cmm::CacheEntry* {
+        uint8_t shift_in = ~(((shift_state & 0x80) >> 7) ^
+                             ((shift_state & 0x08) >> 3) ^
+                             ((shift_state & 0x04) >> 2) ^
+                             ((shift_state & 0x02) >> 1));
+        shift_state = (shift_state << 1) | shift_in;
+        return block.begin() + (shift_state & ways);
+    };
+
+};
+
+} // namespace eviction_strategy
+
+namespace is_valid_strategy
+{
+
+inline auto default_()
+{
+    return [](cmm::CacheEntry& entry){
+        return entry.isValid();
+    };
+};
+
+} // namespace eviction_strategy
 
 void
 cmm::TagMemory::resize(size_type ways, size_type blocks, size_type blockSize)
@@ -132,98 +138,107 @@ cmm::TagMemory::resize(size_type ways, size_type blocks, size_type blockSize)
               << ", offset-bits: " << m_offsetBits <<  ")" << std::endl;
 }
 
-bool
-cmm::Cache::applyConfig(etiss::Configuration& config,
-                        std::string const& configPath)
+cmm::Cache::Cache(std::string name,
+                  TagMemory memory,
+                  CacheDelays delays,
+                  IsValidStrategy isValidStrategy,
+                  EvictionStrategy evictionStrategy) :
+    m_name(std::move(name)),
+    m_delays(std::move(delays)),
+    m_tagMemory(std::move(memory)),
+    m_isValidStrategy(std::move(isValidStrategy)),
+    m_evictStrategy(std::move(evictionStrategy))
 {
-    bool success = true;
-    size_t m_nblocks, m_nways, m_blockSize;
-    success &= loadFromConfig(config, configPath + ".nblocks", m_nblocks);
-    success &= loadFromConfig(config, configPath + ".nways", m_nways);
-    success &= loadFromConfig(config, configPath + ".delay.cacheMiss", m_cacheMissDelay);
-    success &= loadFromConfig(config, configPath + ".delay.cacheHit", m_cacheHitDelay);
-
-    if (!success)
-    {
-        std::cout << "ERROR: Cache specifications are invalid!" << std::endl;
-        return false;
-    }
-
-    // not critical
-    loadFromConfig(config, configPath + ".blockSize", m_blockSize, (size_t)1);
-
-    // allocate tag memory
-    m_tagCache.resize(m_nways, m_nblocks, m_blockSize);
-
-    // evict strategy
-    uint8_t shift_state = 0;
-    const size_t ways = m_tagCache.ways() - 1;
-
-    auto lfsr = [shift_state, ways](cmm::CacheBlock& block) mutable -> cmm::CacheEntry* {
-        uint8_t shift_in = ~(((shift_state & 0x80) >> 7) ^
-                             ((shift_state & 0x08) >> 3) ^
-                             ((shift_state & 0x04) >> 2) ^
-                             ((shift_state & 0x02) >> 1));
-        shift_state = (shift_state << 1) | shift_in;
-        return block.begin() + (shift_state & ways);
-    };
-    m_evictStrategy = lfsr;
-
-    return success;
+    assert(m_isValidStrategy);
+    assert(m_evictStrategy);
 }
-
-cmm::Cache::Cache(std::string name) :
-    m_name(std::move(name))
-{ }
 
 cmm::Cache::~Cache()
 {
+    constexpr unsigned width = 6, precision = 4;
+
     uint total = t_hits + t_misses;
     if (total == 0) return;
 
-    std::cout << m_name << " Cache Performance:" "\n "
-              << t_hits      << " cache hits ("
-              << std::setprecision(4) << (t_hits * 100.0) / total         << "%)" "\n "
-              << t_evictions << " evictions ("
-              << std::setprecision(4) << (t_evictions * 100.0) / t_misses << "%) of "
-              << t_misses    << " cache misses ("
-              << std::setprecision(4) << (t_misses * 100.0) / total       << "%)"
+    std::cout << "\n"
+              << m_name << " Cache Performance:" "\n "
+              << std::setw(width) << std::right <<  t_hits                          << " cache hits ("
+              << std::setprecision(precision)   << (t_hits * 100.0) / total         << "%) and" "\n "
+              << std::setw(width) << std::right <<  t_misses                        << " cache misses ("
+              << std::setprecision(precision)   << (t_misses * 100.0) / total       << "%) with" "\n "
+              << std::setw(width) << std::right <<  t_evictions                     << " evictions ("
+              << std::setprecision(precision)   << (t_evictions * 100.0) / t_misses << "%)"
               << std::endl;
 }
 
 bool
 cmm::Cache::fetch(uint64_t addr, int& delay)
 {
-    uint64_t tag   = m_tagCache.getTag(addr);
-    uint64_t index = m_tagCache.getBlockIndex(addr);
+    uint64_t tag   = m_tagMemory.getTag(addr);
+    uint64_t index = m_tagMemory.getBlockIndex(addr);
 
-    cmm::CacheBlock block = m_tagCache.getBlock(index);
+    CacheBlock block = m_tagMemory.getBlock(index);
 
-    if (isInCache(block, tag))
+    CacheEntry* entry = block.findEntry(tag);
+    const bool hit = !!entry;
+    if (hit)
     {
-        // Cache hit
-        delay += m_cacheHitDelay;
+        // cache hit
+        delay += m_delays.hit;
         t_hits++;
-        return true;
+
+        // check if entry is valid
+        if (m_isValidStrategy(*entry))
+        {
+            update(block, *entry);
+            return hit;
+        }
+
+        writeback(*entry);
+    }
+    else
+    {
+        // cache miss
+        delay += m_delays.miss;
+        t_misses++;
     }
 
-    // cache miss
-    delay += m_cacheMissDelay;
-    t_misses++;
+    replace(block, tag);
+    return hit;
+}
 
-    // replace entry
-    cmm::CacheEntry* entry = findInvalidEntry(block);
+void
+cmm::Cache::update(CacheBlock block,
+                   CacheEntry& entry)
+{
+    // TODO: update cache entry/block
+}
 
+void
+cmm::Cache::writeback(CacheEntry& entry)
+{
+    // TODO: perform writeback if necessary
+}
+
+void
+cmm::Cache::replace(CacheBlock block,
+                    uint64_t tag)
+{
+    // find entry to replace
+    cmm::CacheEntry* entry = block.findInvalidEntry();
     if (!entry)
     {
+        // evict valid entry
         t_evictions++;
         entry = m_evictStrategy(block);
     }
+    assert(entry);
 
+    // replace entry
     entry->tag = tag;
-    entry->setFlag(cmm::Invalid, false);
+    entry->setFlag(Invalid, false);
 
-    return false;
+    update(block, *entry);
 }
 
 ConfigurableMemoryModel::ConfigurableMemoryModel(PerformanceModel* parent_) :
@@ -243,13 +258,11 @@ ConfigurableMemoryModel::getDelay()
 
     int delay = 0;
 
-    for (size_t idx = 0; idx < m_cacheCount; ++idx)
+    // iterate through all caches
+    for (cmm::Cache& cache : m_caches)
     {
-        // access cache
-        cmm::Cache& cache = m_caches[idx];
-
         bool hit = cache.fetch(addr, delay);
-        if (hit) break;
+        if (hit) break; // exit on hit
     }
     return delay;
 }
@@ -281,11 +294,14 @@ ConfigurableMemoryModel::applyConfig(etiss::Configuration& config)
         // iter points to separator -> advance
         while (iter != end && *iter == SEPARATOR) iter++;
 
-        registerCache(config, cacheName);
+        if (!registerCache(config, cacheName))
+        {
+            throw std::runtime_error("Failed to register cache '" + cacheName + "'");
+        }
     }
 
     // no cache added -> use default constructed memory level
-    if (m_cacheCount == 0)
+    if (m_caches.empty())
     {
         std::cout << "WARNING: no caches were registered!" << std::endl;
     }
@@ -306,25 +322,44 @@ ConfigurableMemoryModel::applyConfig(etiss::Configuration& config)
     std::cout << std::endl;
 }
 
-void
+bool
 ConfigurableMemoryModel::registerCache(etiss::Configuration& config,
                                        std::string const& cacheName)
 {
     std::cout << "Registering cache '" << cacheName << "'..." << std::endl;
 
-    if (m_cacheCount >= m_caches.size())
-    {
-        throw std::runtime_error("ConfigurableMemoryModel::m_levels is out of memory");
-    }
-
     std::string configPath = "plugin.perfEst.memory." + cacheName;
 
-    // setup cache
-    cmm::Cache cache{cacheName};
-    bool success = cache.applyConfig(config, configPath);
-    if (!success) return;
+    size_t nblocks = 0, nways = 0, blockSize = 0;
+
+    bool success = true;
+    // not critical
+    loadFromConfig(config, configPath + ".blockSize", blockSize, (size_t)1);
+    success &= loadFromConfig(config, configPath + ".nblocks", nblocks);
+    success &= loadFromConfig(config, configPath + ".nways", nways);
+
+    cmm::CacheDelays delays;
+    success &= loadFromConfig(config, configPath + ".delay.cacheMiss", delays.miss);
+    success &= loadFromConfig(config, configPath + ".delay.cacheHit", delays.hit);
+
+    if (!success)
+    {
+        std::cout << "ERROR: Cache specifications are invalid!" << std::endl;
+        return false;
+    }
+
+    // allocate tag memory
+    cmm::TagMemory tagMemory;
+    tagMemory.resize(nways, nblocks, blockSize);
+
+    auto evictionStrat = eviction_strategy::lfsr(tagMemory);
+    auto isValidStrat  = is_valid_strategy::default_();
 
     // append cache
-    m_caches[m_cacheCount] = std::move(cache);
-    m_cacheCount++;
+    m_caches.emplace_back(cacheName,
+                          std::move(tagMemory),
+                          std::move(delays),
+                          std::move(isValidStrat),
+                          std::move(evictionStrat));
+    return true;
 }

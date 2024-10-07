@@ -18,7 +18,7 @@
 #define SWEVAL_BACKENDS_CHANNEL_H
 
 #include <string>
-#include <stdbool.h>
+#include <cstdint>
 
 class Channel
 {

@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <functional>
+#include <algorithm>
 
 /// configurable memory model
 namespace cmm
@@ -53,6 +54,7 @@ struct CacheEntry
     }
 };
 
+/// Cache block/line which holds multiple cache entries
 struct CacheBlock
 {
     /// start of range
@@ -62,8 +64,38 @@ struct CacheBlock
 
     CacheEntry* begin() { return begin_; }
     CacheEntry* end() { return end_; }
+
+    /**
+     * @brief Attempts to find a cache entry with the given tag
+     * @return Cache entry with the given tag (may be null)
+     */
+    inline cmm::CacheEntry* findEntry(uint64_t tag)
+    {
+        auto iter = std::find_if(begin(), end(), [tag](const CacheEntry& e){
+            return e.tag == tag;
+        });
+
+        if (iter == end()) return nullptr;
+        return &*iter;
+    }
+
+    /**
+     * @brief Attempts to find a cache entry that is invalid
+     * @return Cache entry that is invalid (may be null)
+     */
+    inline cmm::CacheEntry* findInvalidEntry()
+    {
+        auto iter = std::find_if(begin(), end(), [](const CacheEntry& e){
+            return !e.isValid();
+        });
+
+        if (iter == end()) return nullptr;
+        return &*iter;
+    }
 };
 
+/// Implements a tag memory of a cache and provides simple access to
+/// cache blocks and entries
 class TagMemory
 {
     using container_type = std::vector<CacheEntry>;
@@ -116,7 +148,7 @@ private:
     std::vector<CacheEntry> m_data;
 };
 
-/// Struct to denote cachable address space
+/// Struct to denote a cachable address space
 struct AddressSpace
 {
     uint64_t lower = 0x0; // inclusive
@@ -129,23 +161,32 @@ struct AddressSpace
     }
 };
 
+/// Struct to hold cache delays
+struct CacheDelays
+{
+    /// address in cache (default cache delay)
+    int hit = 1;
+    /// address not in cache
+    int miss = 1;
+};
+
 class Cache
 {
 public:
 
-    Cache(std::string name = {});
+    /// strategy to chose an entry to evict
+    using EvictionStrategy = std::function<cmm::CacheEntry*(cmm::CacheBlock&)>;
+    /// strategy to check if entry is valid
+    using IsValidStrategy = std::function<bool(cmm::CacheEntry&)>;
+
+    Cache(std::string name,
+          TagMemory memory,
+          CacheDelays delays,
+          IsValidStrategy isValidStrategy,
+          EvictionStrategy evictionStrategy);
     ~Cache();
 
     bool fetch(uint64_t address, int& delay);
-
-    /**
-     * @brief applyConfig
-     * @param config
-     * @param configPath Config intern path to cache specific settings
-     * @return
-     */
-    bool applyConfig(etiss::Configuration& config,
-                     std::string const& configPath);
 
     inline std::string const& name() const { return m_name; }
 
@@ -153,17 +194,25 @@ private:
 
     /// name of cache level (non-functional member)
     std::string m_name{};
-    /// address not in cache
-    int m_cacheMissDelay = 1;
-    /// address in cache (default cache delay)
-    int m_cacheHitDelay = 1;
-    /// tag cache memory (allocated once at runtime)
-    cmm::TagMemory m_tagCache;
+    /// delays for cache actions
+    CacheDelays m_delays;
+    /// tag cache memory
+    TagMemory m_tagMemory;
+    /// strategy to check if entry is valid
+    IsValidStrategy m_isValidStrategy{};
+    /// strategy to evict entry
+    EvictionStrategy m_evictStrategy{};
 
-    std::function<cmm::CacheEntry*(cmm::CacheBlock&)> m_evictStrategy{};
+    void update(CacheBlock block,
+                CacheEntry& entry);
 
-    // temporaries (for debugging)
-    uint t_hits = 0, t_misses = 0, t_evictions = 0;
+    void writeback(CacheEntry& entry);
+
+    void replace(CacheBlock block,
+                 uint64_t tag);
+
+    // temporaries (for debugging/statistics)
+    unsigned t_hits = 0, t_misses = 0, t_evictions = 0;
 };
 
 } // namespace cmm
@@ -173,8 +222,6 @@ private:
  */
 class ConfigurableMemoryModel : public ResourceModel
 {
-    static constexpr size_t MAX_CACHE_COUNT = 5;
-
 public:
 
     ConfigurableMemoryModel(PerformanceModel* parent_);
@@ -199,19 +246,17 @@ private:
 
     /// cachable address space
     cmm::AddressSpace m_addrSpace{};
-    /// delay for accessing non cachable memory addresses
-    int m_notCachableDelay{};
-    /// number of memory levels
-    size_t m_cacheCount = 0;
     /// Memory levels
-    std::array<cmm::Cache, MAX_CACHE_COUNT> m_caches;
+    std::vector<cmm::Cache> m_caches;
+    /// delay for accessing non cachable memory addresses
+    int m_notCachableDelay = 0;
 
     /**
      * @brief Registers a memory level and applies its configuration
      * @param config
      * @param cacheName
      */
-    void registerCache(etiss::Configuration& config, std::string const& cacheName);
+    bool registerCache(etiss::Configuration& config, std::string const& cacheName);
 };
 
 #endif //CONFIGURABLE_MEMORY_MODEL_H
