@@ -18,11 +18,23 @@
 
 #include "etiss/Misc.h"
 
-#include <iostream>
-#include <iomanip>
 #include <string>
 #include <cmath>
 #include <cassert>
+
+#include <unistd.h>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+
+// define to enable/disable logging of cache performance statisitcs
+#define OUTPUT_STATISTICS
+
+#ifdef OUTPUT_STATISTICS
+#define STATISTICS_ONLY(STATEMENT) STATEMENT
+#else
+#define STATISTICS_ONLY(STATEMENT) STATEMENT
+#endif
 
 namespace
 {
@@ -155,11 +167,14 @@ cmm::Cache::Cache(std::string name,
 
 cmm::Cache::~Cache()
 {
+#ifdef OUTPUT_STATISTICS
+    // output statistics
     constexpr unsigned width = 6, precision = 4;
+    unsigned total = t_hits + t_misses;
 
-    uint total = t_hits + t_misses;
     if (total == 0) return;
 
+    // basic statistics
     std::cout << "\n"
               << m_name << " Cache Performance:" "\n "
               << std::setw(width) << std::right <<  t_hits                          << " cache hits ("
@@ -169,41 +184,103 @@ cmm::Cache::~Cache()
               << std::setw(width) << std::right <<  t_evictions                     << " evictions ("
               << std::setprecision(precision)   << (t_evictions * 100.0) / t_misses << "%)"
               << std::endl;
+
+    // find path to exe
+    char cwd[256];
+    size_t len = readlink("/proc/self/exe", cwd, sizeof(cwd));
+    if (len < 0 || len > sizeof(cwd)) return;
+
+    std::string filePath;
+    // find directory
+    auto rbegin = std::make_reverse_iterator(cwd + len);
+    auto rend = std::make_reverse_iterator(cwd);
+    auto directory = std::find(rbegin, rend, '/');
+    if (directory == rend) return;
+
+    std::copy(cwd, directory.base(), std::back_inserter(filePath));
+    filePath += "histogram-" + name() + ".csv";
+
+    std::cout << "creating cache histogram at " << filePath << std::endl;
+
+    // detailed cache histogram
+    std::ofstream fs;
+    fs.open(filePath, std::ios::out);
+
+    if (!fs.is_open()) return;
+
+    // header
+    fs << "index," "ways-used," "hits," "evictions\n";
+
+    // data
+    for (size_t idx = 0; idx < m_tagMemory.blocks(); idx++)
+    {
+        uint32_t hits = 0, evictions = 0, waysUsed = 0;
+        for (size_t way = 0; way < m_tagMemory.ways(); way++)
+        {
+            auto* entry = (m_tagMemory.getBlock(idx).begin() + way);
+            if (entry->t_hits > 0) waysUsed  += 1;
+
+            hits  += entry->t_hits;
+            evictions += entry->t_evictions;
+        }
+        fs << std::hex << idx << std::dec << "," << waysUsed << "," << hits << "," << evictions << "\n";
+    }
+
+    fs << std::endl;
+    fs.close();
+#endif
 }
 
 bool
 cmm::Cache::fetch(uint64_t addr, int& delay)
 {
-    uint64_t tag   = m_tagMemory.getTag(addr);
-    uint64_t index = m_tagMemory.getBlockIndex(addr);
+    const uint64_t tag   = m_tagMemory.getTag(addr);
+    const uint64_t index = m_tagMemory.getBlockIndex(addr);
 
     CacheBlock block = m_tagMemory.getBlock(index);
 
     CacheEntry* entry = block.findEntry(tag);
+
     const bool hit = !!entry;
-    if (hit)
+    if (hit) // cache hit
     {
-        // cache hit
         delay += m_delays.hit;
-        t_hits++;
+        STATISTICS_ONLY(t_hits++);
 
         // check if entry is valid
         if (m_isValidStrategy(*entry))
         {
+            STATISTICS_ONLY(entry->t_hits++);
+
             update(block, *entry);
             return hit;
         }
 
+        // TODO: entry requires writeback
         writeback(*entry);
     }
-    else
-    {
-        // cache miss
+    else // cache miss
+    {        
         delay += m_delays.miss;
-        t_misses++;
+        STATISTICS_ONLY(t_misses++);
+
+        // find entry to replace
+        entry = block.findInvalidEntry();
+        if (!entry)
+        {
+            // evict valid entry
+            entry = m_evictStrategy(block);
+
+            STATISTICS_ONLY(t_evictions++);
+            STATISTICS_ONLY(entry->t_evictions++);
+        }
     }
 
-    replace(block, tag);
+    assert(entry);
+
+    // replace entry
+    replace(block, *entry, tag);
+    update(block, *entry);
     return hit;
 }
 
@@ -211,29 +288,17 @@ void
 cmm::Cache::update(CacheBlock block,
                    CacheEntry& entry)
 {
-    // TODO: update cache entry/block
-    entry.t_accesses++;
+    // TODO: update cache entry/block? (e.g. access time)
 }
 
 void
 cmm::Cache::replace(CacheBlock block,
+                    CacheEntry& entry,
                     uint64_t tag)
 {
-    // find entry to replace
-    cmm::CacheEntry* entry = block.findInvalidEntry();
-    if (!entry)
-    {
-        // evict valid entry
-        t_evictions++;
-        entry = m_evictStrategy(block);
-    }
-    assert(entry);
-
     // replace entry
-    entry->tag = tag;
-    entry->setFlag(Invalid, false);
-
-    update(block, *entry);
+    entry.tag = tag;
+    entry.setFlag(Invalid, false);
 }
 
 ConfigurableMemoryModel::ConfigurableMemoryModel(PerformanceModel* parent_) :
@@ -347,6 +412,7 @@ ConfigurableMemoryModel::registerCache(etiss::Configuration& config,
     cmm::TagMemory tagMemory;
     tagMemory.resize(nways, nblocks, blockSize);
 
+    // strategies
     auto evictionStrat = eviction_strategy::lfsr(tagMemory);
     auto isValidStrat  = is_valid_strategy::default_();
 

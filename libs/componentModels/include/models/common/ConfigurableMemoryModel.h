@@ -40,14 +40,14 @@ using StatusFlags = unsigned;
 /// Cache entry
 struct CacheEntry
 {
-    uint64_t tag = 0x0;
-    StatusFlags flags = Invalid;
+    uint64_t tag  = 0x0;
+    uint8_t flags = Invalid;
 
     /// checks whether the cache entry is valid
-    constexpr inline bool isValid() const
-    {
-        return !(flags & Invalid);
-    }
+    constexpr inline bool isValid() const { return !hasFlag(Invalid); }
+
+    /// checks whether the flag is set
+    constexpr inline bool hasFlag(StatusFlag flag) const { return flags & flag; }
 
     /// sets the given flag for the cache entry
     constexpr inline void setFlag(StatusFlag flag, bool enable = true)
@@ -57,7 +57,7 @@ struct CacheEntry
     }
 
     // temporaries (for debugging/statistics)
-    unsigned t_accesses = 0;
+    uint32_t t_hits  = 0, t_evictions = 0;
 };
 
 /// Cache block/line which holds multiple cache entries
@@ -252,12 +252,13 @@ private:
     }
 
     /**
-     * @brief Replaces an entry in the cache block. May perform an eviction if
-     * necessary.
-     * @param block Block to find and replace an entry in
+     * @brief Replaces the entry in the cache block.
+     * @param block Block that contains the entry
+     * @param entry Entry to replace
      * @param tag Tag to store in cache entry
      */
     void replace(CacheBlock block,
+                 CacheEntry& entry,
                  uint64_t tag);
 
     // temporaries (for debugging/statistics)
