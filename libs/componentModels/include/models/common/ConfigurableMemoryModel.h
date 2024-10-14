@@ -28,20 +28,24 @@ namespace cmm
 {
 
 /// Status flags of a cache entry
-enum StatusFlag : unsigned
+enum StatusFlag : uint32_t
 {
     NoFlag = 0,
     /// cache entry is invalid -> entry must be fetched to access
     Invalid = 1 << 0,
     // TODO: Dirty Flag? Coherency Flags?
 };
-using StatusFlags = unsigned;
+using StatusFlags = uint32_t;
 
 /// Cache entry
 struct CacheEntry
 {
+    /// tag part of cache entry
     uint64_t tag  = 0x0;
-    uint8_t flags = Invalid;
+    /// custom data
+    uint32_t data = 0x0;
+    /// status flags
+    StatusFlags flags = Invalid;
 
     /// checks whether the cache entry is valid
     constexpr inline bool isValid() const { return !hasFlag(Invalid); }
@@ -262,7 +266,7 @@ private:
                  uint64_t tag);
 
     // temporaries (for debugging/statistics)
-    unsigned t_hits = 0, t_misses = 0, t_evictions = 0;
+    uint32_t t_hits = 0, t_misses = 0, t_evictions = 0;
 };
 
 } // namespace cmm

@@ -39,6 +39,7 @@
 namespace
 {
 
+/// logs std::pair to console (required for std::map)
 template <typename T, typename U>
 inline std::ostream&
 operator<<(std::ostream& s, std::pair<T, U> const& t)
@@ -46,6 +47,7 @@ operator<<(std::ostream& s, std::pair<T, U> const& t)
     return s << '(' << t.first << ", " << t.second << ')';
 }
 
+/// helper method to log iteator ranges to console
 template<typename Iter>
 void logIter(std::ostream& s,
              Iter a, Iter b,
@@ -68,6 +70,7 @@ void logIter(std::ostream& s,
     s << suf;
 }
 
+/// logs std::map to console
 template<typename K, typename V, typename... R>
 std::ostream& operator<<(std::ostream& s, std::map<K, V, R...> const& t)
 {
@@ -75,9 +78,6 @@ std::ostream& operator<<(std::ostream& s, std::map<K, V, R...> const& t)
     return s;
 }
 
-/**
- * @brief
- */
 template<typename T>
 bool loadFromConfig(etiss::Configuration& config, std::string const& path, T& value, T const& default_ = {})
 {
@@ -112,7 +112,7 @@ inline auto lfsr(const cmm::TagMemory& tagMemory)
         return block.begin() + (shift_state & ways);
     };
 
-};
+}
 
 } // namespace eviction_strategy
 
@@ -124,7 +124,7 @@ inline auto default_()
     return [](cmm::CacheEntry& entry){
         return entry.isValid();
     };
-};
+}
 
 } // namespace eviction_strategy
 
@@ -202,7 +202,7 @@ cmm::Cache::~Cache()
 
     std::cout << "creating cache histogram at " << filePath << std::endl;
 
-    // detailed cache histogram
+    // detailed cache statistics
     std::ofstream fs;
     fs.open(filePath, std::ios::out);
 
@@ -214,6 +214,7 @@ cmm::Cache::~Cache()
     // data
     for (size_t idx = 0; idx < m_tagMemory.blocks(); idx++)
     {
+        // accumulate statistics of all ways
         uint32_t hits = 0, evictions = 0, waysUsed = 0;
         for (size_t way = 0; way < m_tagMemory.ways(); way++)
         {
