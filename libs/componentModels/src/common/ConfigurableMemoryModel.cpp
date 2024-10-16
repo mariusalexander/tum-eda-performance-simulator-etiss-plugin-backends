@@ -116,18 +116,6 @@ inline auto lfsr(const cmm::TagMemory& tagMemory)
 
 } // namespace eviction_strategy
 
-namespace is_valid_strategy
-{
-
-inline auto default_()
-{
-    return [](cmm::CacheEntry& entry){
-        return entry.isValid();
-    };
-}
-
-} // namespace eviction_strategy
-
 void
 cmm::TagMemory::resize(size_type ways, size_type blocks, size_type blockSize)
 {
@@ -153,12 +141,10 @@ cmm::TagMemory::resize(size_type ways, size_type blocks, size_type blockSize)
 cmm::Cache::Cache(std::string name,
                   TagMemory memory,
                   CacheDelays delays,
-                  IsValidStrategy isValidStrategy,
                   EvictionStrategy evictionStrategy) :
     m_name(std::move(name)),
     m_delays(std::move(delays)),
     m_tagMemory(std::move(memory)),
-    m_isValidStrategy(std::move(isValidStrategy)),
     m_evictStrategy(std::move(evictionStrategy))
 {
     assert(m_isValidStrategy);
@@ -242,34 +228,27 @@ cmm::Cache::fetch(uint64_t addr, int& delay)
 
     CacheEntry* entry = block.findEntry(tag);
 
-    const bool hit = !!entry;
+    const bool hit = entry && entry->isValid();
     if (hit) // cache hit
     {
         delay += m_delays.hit;
         STATISTICS_ONLY(t_hits++);
+        STATISTICS_ONLY(entry->t_hits++);
 
-        // check if entry is valid
-        if (m_isValidStrategy(*entry))
-        {
-            STATISTICS_ONLY(entry->t_hits++);
-
-            update(block, *entry);
-            return hit;
-        }
-
-        // TODO: entry requires writeback
-        writeback(*entry);
+        update(block, *entry);
+        return hit;
     }
     else // cache miss
-    {        
+    {
         delay += m_delays.miss;
         STATISTICS_ONLY(t_misses++);
 
-        // find entry to replace
-        entry = block.findInvalidEntry();
-        if (!entry)
+        if (!entry) // find entry to replace
         {
-            // evict valid entry
+            entry = block.findInvalidEntry();
+        }
+        if (!entry) // evict valid entry
+        {
             entry = m_evictStrategy(block);
 
             STATISTICS_ONLY(t_evictions++);
@@ -415,13 +394,11 @@ ConfigurableMemoryModel::registerCache(etiss::Configuration& config,
 
     // strategies
     auto evictionStrat = eviction_strategy::lfsr(tagMemory);
-    auto isValidStrat  = is_valid_strategy::default_();
 
     // append cache
     m_caches.emplace_back(cacheName,
                           std::move(tagMemory),
                           std::move(delays),
-                          std::move(isValidStrat),
                           std::move(evictionStrat));
     return true;
 }

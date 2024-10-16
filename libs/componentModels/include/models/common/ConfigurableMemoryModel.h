@@ -207,13 +207,10 @@ public:
 
     /// strategy to chose an entry to evict
     using EvictionStrategy = std::function<cmm::CacheEntry*(cmm::CacheBlock&)>;
-    /// strategy to check if entry is valid
-    using IsValidStrategy = std::function<bool(cmm::CacheEntry&)>;
 
     Cache(std::string name,
           TagMemory memory,
           CacheDelays delays,
-          IsValidStrategy isValidStrategy,
           EvictionStrategy evictionStrategy);
     ~Cache();
 
@@ -237,8 +234,6 @@ private:
     CacheDelays m_delays;
     /// tag cache memory
     TagMemory m_tagMemory;
-    /// strategy to check if entry is valid
-    IsValidStrategy m_isValidStrategy{};
     /// strategy to evict entry
     EvictionStrategy m_evictStrategy{};
 
@@ -249,11 +244,6 @@ private:
      */
     void update(CacheBlock block,
                 CacheEntry& entry);
-
-    void writeback(CacheEntry& entry)
-    {
-        // TODO: perform writeback if necessary, requires write-back delay?
-    }
 
     /**
      * @brief Replaces the entry in the cache block.
