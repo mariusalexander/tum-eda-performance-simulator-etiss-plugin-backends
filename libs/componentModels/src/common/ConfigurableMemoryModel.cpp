@@ -147,7 +147,6 @@ cmm::Cache::Cache(std::string name,
     m_tagMemory(std::move(memory)),
     m_evictStrategy(std::move(evictionStrategy))
 {
-    assert(m_isValidStrategy);
     assert(m_evictStrategy);
 }
 
@@ -246,13 +245,13 @@ cmm::Cache::fetch(uint64_t addr, int& delay)
         if (!entry) // find entry to replace
         {
             entry = block.findInvalidEntry();
-        }
-        if (!entry) // evict valid entry
-        {
-            entry = m_evictStrategy(block);
+            if (!entry) // evict valid entry
+            {
+                entry = m_evictStrategy(block);
 
-            STATISTICS_ONLY(t_evictions++);
-            STATISTICS_ONLY(entry->t_evictions++);
+                STATISTICS_ONLY(t_evictions++);
+                STATISTICS_ONLY(entry->t_evictions++);
+            }
         }
     }
 
