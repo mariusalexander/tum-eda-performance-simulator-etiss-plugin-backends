@@ -77,6 +77,8 @@ struct CacheBlock
     /// end iterator
     CacheEntry* end() { return end_; }
 
+    CacheEntry* operator[](size_t idx) { return begin() + idx; }
+
     /**
      * @brief Attempts to find a cache entry with the given tag
      * @return Cache entry with the given tag (may be null)
@@ -207,11 +209,13 @@ public:
 
     /// strategy to chose an entry to evict
     using EvictionStrategy = std::function<cmm::CacheEntry*(cmm::CacheBlock&)>;
+    using UpdateStrategy   = std::function<void(cmm::CacheBlock&, cmm::CacheEntry&)>;
 
     Cache(std::string name,
           TagMemory memory,
           CacheDelays delays,
-          EvictionStrategy evictionStrategy);
+          EvictionStrategy evictionStrategy,
+          UpdateStrategy updateStrategy);
     ~Cache();
 
     /**
@@ -236,6 +240,8 @@ private:
     TagMemory m_tagMemory;
     /// strategy to evict entry
     EvictionStrategy m_evictStrategy{};
+    /// update strategy
+    UpdateStrategy m_updateStrategy{};
 
     /**
      * @brief Updates the status of the cache entry/block (e.g. access times)

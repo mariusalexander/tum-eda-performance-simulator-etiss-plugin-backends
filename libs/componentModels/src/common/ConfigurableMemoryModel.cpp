@@ -21,19 +21,20 @@
 #include <string>
 #include <cmath>
 #include <cassert>
+#include <random>
 
 #include <unistd.h>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 
-// define to enable/disable logging of cache performance statisitcs
+// define to enable/disable logging of cache performance statistics
 #define OUTPUT_STATISTICS
 
 #ifdef OUTPUT_STATISTICS
 #define STATISTICS_ONLY(STATEMENT) STATEMENT
 #else
-#define STATISTICS_ONLY(STATEMENT) STATEMENT
+#define STATISTICS_ONLY(STATEMENT)
 #endif
 
 namespace
@@ -97,6 +98,7 @@ bool loadFromConfig(etiss::Configuration& config, std::string const& path, T& va
 namespace eviction_strategy
 {
 
+/// linear feedback shift register (adopted from DCacheModel)
 inline auto lfsr(const cmm::TagMemory& tagMemory)
 {
     // evict strategy
@@ -109,12 +111,49 @@ inline auto lfsr(const cmm::TagMemory& tagMemory)
                              ((shift_state & 0x04) >> 2) ^
                              ((shift_state & 0x02) >> 1));
         shift_state = (shift_state << 1) | shift_in;
-        return block.begin() + (shift_state & ways);
+        return block[shift_state & ways];
     };
+}
 
+/// chose a random way to evict
+inline auto random(const cmm::TagMemory& tagMemory)
+{
+    const size_t ways = tagMemory.ways();
+    return [ways](cmm::CacheBlock& block) -> cmm::CacheEntry* {
+        return block[rand() % ways];
+    };
+}
+
+/// least frequently used
+inline auto lfu(const cmm::TagMemory& tagMemory)
+{
+    return [](cmm::CacheBlock& block) -> cmm::CacheEntry* {
+        return &*std::max_element(block.begin(), block.end(),
+                                [](cmm::CacheEntry& smallest,
+                                   cmm::CacheEntry& entry){
+            // data = number of accesses
+            return entry.data < smallest.data;
+        });
+    };
 }
 
 } // namespace eviction_strategy
+
+namespace update_strategy
+{
+
+inline auto default_(const cmm::TagMemory&) { return cmm::Cache::UpdateStrategy{}; }
+
+/// least frequently used update strategy
+inline auto lfu(const cmm::TagMemory& tagMemory)
+{
+    return [](cmm::CacheBlock& block, cmm::CacheEntry& entry) {
+        // data = number of accesses
+        entry.data += 1;
+    };
+}
+
+} // namespace update_strategy
 
 void
 cmm::TagMemory::resize(size_type ways, size_type blocks, size_type blockSize)
@@ -141,11 +180,13 @@ cmm::TagMemory::resize(size_type ways, size_type blocks, size_type blockSize)
 cmm::Cache::Cache(std::string name,
                   TagMemory memory,
                   CacheDelays delays,
-                  EvictionStrategy evictionStrategy) :
+                  EvictionStrategy evictionStrategy,
+                  UpdateStrategy updateStrategy) :
     m_name(std::move(name)),
     m_delays(std::move(delays)),
     m_tagMemory(std::move(memory)),
-    m_evictStrategy(std::move(evictionStrategy))
+    m_evictStrategy(std::move(evictionStrategy)),
+    m_updateStrategy(std::move(updateStrategy))
 {
     assert(m_evictStrategy);
 }
@@ -199,11 +240,12 @@ cmm::Cache::~Cache()
     // data
     for (size_t idx = 0; idx < m_tagMemory.blocks(); idx++)
     {
+        CacheBlock block = m_tagMemory.getBlock(idx);
         // accumulate statistics of all ways
         uint32_t hits = 0, evictions = 0, waysUsed = 0;
         for (size_t way = 0; way < m_tagMemory.ways(); way++)
         {
-            auto* entry = (m_tagMemory.getBlock(idx).begin() + way);
+            auto* entry = block[way];
             if (entry->t_hits > 0) waysUsed  += 1;
 
             hits  += entry->t_hits;
@@ -268,6 +310,7 @@ cmm::Cache::update(CacheBlock block,
                    CacheEntry& entry)
 {
     // TODO: update cache entry/block? (e.g. access time)
+    if (m_updateStrategy) m_updateStrategy(block, entry);
 }
 
 void
@@ -278,6 +321,8 @@ cmm::Cache::replace(CacheBlock block,
     // replace entry
     entry.tag = tag;
     entry.setFlag(Invalid, false);
+    // move to separate replacement strategy?
+    entry.data = 0x0;
 }
 
 ConfigurableMemoryModel::ConfigurableMemoryModel(PerformanceModel* parent_) :
@@ -393,11 +438,13 @@ ConfigurableMemoryModel::registerCache(etiss::Configuration& config,
 
     // strategies
     auto evictionStrat = eviction_strategy::lfsr(tagMemory);
+    auto updateStrat   = update_strategy::default_(tagMemory);
 
     // append cache
     m_caches.emplace_back(cacheName,
                           std::move(tagMemory),
                           std::move(delays),
-                          std::move(evictionStrat));
+                          std::move(evictionStrat),
+                          std::move(updateStrat));
     return true;
 }
