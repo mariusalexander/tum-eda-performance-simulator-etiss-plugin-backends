@@ -17,7 +17,7 @@
 /********************* AUTO GENERATE FILE (create by M2-ISA-R-Perf) *********************/
 
 
-#include "CV32E40P_PerformanceModel.h"
+#include "SimpleRISCV_H_fw_StaBrPred_PerformanceModel.h"
 
 #include <stdbool.h>
 #include <string>
@@ -26,67 +26,66 @@
 
 #include "Channel.h"
 
-#include "CV32E40P_Channel.h"
+#include "SimpleRISCV_H_fw_StaBrPred_Channel.h"
 
-#include "models/common/StandardRegisterModel.h"
 #include "models/common/StaticBranchPredictModel.h"
-#include "models/cv32e40p/DividerModel.h"
-#include "models/cv32e40p/DividerUnsignedModel.h"
+#include "models/common/StandardRegisterModel.h"
+#include "models/common/DummyMemoryModel.h"
+#include "models/common/DummyMemoryModel.h"
 
-namespace CV32E40P{
+namespace SimpleRISCV_H_fw_StaBrPred{
 
-void CV32E40P_PerformanceModel::connectChannel(Channel* channel_)
+void SimpleRISCV_H_fw_StaBrPred_PerformanceModel::connectChannel(Channel* channel_)
 {
-  CV32E40P_Channel* channel = static_cast<CV32E40P_Channel*>(channel_);
+  SimpleRISCV_H_fw_StaBrPred_Channel* channel = static_cast<SimpleRISCV_H_fw_StaBrPred_Channel*>(channel_);
+
+  staBranchPredModel.pc_ptr = channel->pc;
+  staBranchPredModel.brTarget_ptr = channel->brTarget;
 
   regModel.rs1_ptr = channel->rs1;
   regModel.rs2_ptr = channel->rs2;
   regModel.rd_ptr = channel->rd;
 
-  staBranchPredModel.pc_ptr = channel->pc;
-  staBranchPredModel.brTarget_ptr = channel->brTarget;
 
-  divider.rs2_data_ptr = channel->rs2_data;
-
-  divider_u.rs2_data_ptr = channel->rs2_data;
 
 }
 
-uint64_t CV32E40P_PerformanceModel::getCycleCount(void)
+uint64_t SimpleRISCV_H_fw_StaBrPred_PerformanceModel::getCycleCount(void)
 {
   
   return std::max({
     IF_stage 
     ,ID_stage
     ,EX_stage
+    ,MEM_stage
     ,WB_stage
   });
 }
 
-std::string CV32E40P_PerformanceModel::getPipelineStream(void)
+std::string SimpleRISCV_H_fw_StaBrPred_PerformanceModel::getPipelineStream(void)
 {
   std::stringstream ret_strs;
   ret_strs << entrancePoint;
   ret_strs << "," << IF_stage;
   ret_strs << "," << ID_stage;
   ret_strs << "," << EX_stage;
+  ret_strs << "," << MEM_stage;
   ret_strs << "," << WB_stage;
-  ret_strs << "," << staBranchPredModel.getInfoStream();
   ret_strs << std::endl;
   return ret_strs.str();
 }
 
-std::string CV32E40P_PerformanceModel::getPrintHeader(void)
+std::string SimpleRISCV_H_fw_StaBrPred_PerformanceModel::getPrintHeader(void)
 {
   std::stringstream ret_strs;
   ret_strs << "Enter";
   ret_strs << "," << "IF_stage";
   ret_strs << "," << "ID_stage";
   ret_strs << "," << "EX_stage";
+  ret_strs << "," << "MEM_stage";
   ret_strs << "," << "WB_stage";
-  ret_strs << "," << staBranchPredModel.getInfoHeader();
   ret_strs << std::endl;
   return ret_strs.str();
 }
 
-} // namespace CV32E40P
+} // namespace SimpleRISCV_H_fw_StaBrPred

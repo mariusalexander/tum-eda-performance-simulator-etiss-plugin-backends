@@ -1,0 +1,13 @@
+
+TARGET_SOURCES(SWEVAL_BACKENDS_LIB PRIVATE
+  	src/SimpleRISCV_H_nfw_DynBrPred_PerformanceModel.cpp
+	src/SimpleRISCV_H_nfw_DynBrPred_SchedulingFunction.cpp
+	src/SimpleRISCV_H_nfw_DynBrPred_Channel.cpp
+	src/SimpleRISCV_H_nfw_DynBrPred_Printer.cpp
+	src/SimpleRISCV_H_nfw_DynBrPred_InstructionPrinters.cpp
+
+)
+
+TARGET_INCLUDE_DIRECTORIES(SWEVAL_BACKENDS_LIB PRIVATE
+include
+)

@@ -17,10 +17,18 @@
 /********************* AUTO GENERATE FILE (create by M2-ISA-R::Trace-Generator) *********************/
 
 
-#include "CV32E40P_Channel.h"
+#include "SimpleRISCV_H_fw_DynBrPred_Channel.h"
 
-void *CV32E40P_Channel::getTraceValueHook(std::string trVal_)
+void *SimpleRISCV_H_fw_DynBrPred_Channel::getTraceValueHook(std::string trVal_)
 {
+  if(trVal_ == "pc")
+  {
+    return pc;
+  }
+  if(trVal_ == "brTarget")
+  {
+    return brTarget;
+  }
   if(trVal_ == "rs1")
   {
     return rs1;
@@ -32,18 +40,6 @@ void *CV32E40P_Channel::getTraceValueHook(std::string trVal_)
   if(trVal_ == "rd")
   {
     return rd;
-  }
-  if(trVal_ == "pc")
-  {
-    return pc;
-  }
-  if(trVal_ == "brTarget")
-  {
-    return brTarget;
-  }
-  if(trVal_ == "rs2_data")
-  {
-    return rs2_data;
   }
   return nullptr;
 }

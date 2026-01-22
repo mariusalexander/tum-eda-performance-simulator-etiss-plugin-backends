@@ -17,8 +17,8 @@
 /********************* AUTO GENERATE FILE (create by M2-ISA-R-Perf) *********************/
 
 
-#ifndef SWEVAL_BACKENDS_CV32E40P_PERFORMANCE_MODEL_H
-#define SWEVAL_BACKENDS_CV32E40P_PERFORMANCE_MODEL_H
+#ifndef SWEVAL_BACKENDS_SIMPLERISCV_H_NFW_DYNBRPRED_PERFORMANCE_MODEL_H
+#define SWEVAL_BACKENDS_SIMPLERISCV_H_NFW_DYNBRPRED_PERFORMANCE_MODEL_H
 
 #include <stdbool.h>
 #include <string>
@@ -27,24 +27,24 @@
 #include "PerformanceModel.h"
 #include "Channel.h"
 
+#include "models/common/DynamicBranchPredictModel.h"
 #include "models/common/StandardRegisterModel.h"
-#include "models/common/StaticBranchPredictModel.h"
-#include "models/cv32e40p/DividerModel.h"
-#include "models/cv32e40p/DividerUnsignedModel.h"
+#include "models/common/DummyMemoryModel.h"
+#include "models/common/DummyMemoryModel.h"
 
-namespace CV32E40P{
+namespace SimpleRISCV_H_nfw_DynBrPred{
 
-extern SchedulingFunctionSet* CV32E40P_SchedulingFunctionSet;
+extern SchedulingFunctionSet* SimpleRISCV_H_nfw_DynBrPred_SchedulingFunctionSet;
 
-class CV32E40P_PerformanceModel : public PerformanceModel
+class SimpleRISCV_H_nfw_DynBrPred_PerformanceModel : public PerformanceModel
 {
 public:
 
-  CV32E40P_PerformanceModel() : PerformanceModel("CV32E40P", CV32E40P_SchedulingFunctionSet)
+  SimpleRISCV_H_nfw_DynBrPred_PerformanceModel() : PerformanceModel("SimpleRISCV_H_nfw_DynBrPred", SimpleRISCV_H_nfw_DynBrPred_SchedulingFunctionSet)
+    ,dynBranchPredModel(this)
     ,regModel(this)
-    ,staBranchPredModel(this)
-    ,divider(this)
-    ,divider_u(this)
+    ,iMemModel(this)
+    ,dMemModel(this)
   {};
 
   // Entrance-point "timing variable" (only used for info-stream)
@@ -54,14 +54,15 @@ public:
   uint64_t IF_stage = 0;
   uint64_t ID_stage = 0;
   uint64_t EX_stage = 0;
+  uint64_t MEM_stage = 0;
   uint64_t WB_stage = 0;
 
 
   // External Resource Models
+  common::DynamicBranchPredictModel dynBranchPredModel;
   common::StandardRegisterModel regModel;
-  common::StaticBranchPredictModel staBranchPredModel;
-  cv32e40p::DividerModel divider;
-  cv32e40p::DividerUnsignedModel divider_u;
+  common::DummyMemoryModel iMemModel;
+  common::DummyMemoryModel dMemModel;
 
   virtual void connectChannel(Channel*);
   virtual uint64_t getCycleCount(void);
@@ -70,6 +71,6 @@ public:
 
 };
 
-} // namespace CV32E40P
+} // namespace SimpleRISCV_H_nfw_DynBrPred
 
-#endif // SWEVAL_BACKENDS_CV32E40P_PERFORMANCE_MODEL_H
+#endif // SWEVAL_BACKENDS_SIMPLERISCV_H_NFW_DYNBRPRED_PERFORMANCE_MODEL_H

@@ -17,41 +17,39 @@
 /********************* AUTO GENERATE FILE (create by M2-ISA-R::Trace-Generator) *********************/
 
 
-#include "CV32E40P_Printer.h"
+#include "SimpleRISCV_H_fw_DynBrPred_Printer.h"
 
 #include "Printer.h"
 
-#include "CV32E40P_Channel.h"
+#include "SimpleRISCV_H_fw_DynBrPred_Channel.h"
 
 #include <iostream>
 #include <iomanip>
 
-extern InstructionPrinterSet* CV32E40P_InstrPrinterSet;
+extern InstructionPrinterSet* SimpleRISCV_H_fw_DynBrPred_InstrPrinterSet;
 
-CV32E40P_Printer::CV32E40P_Printer(): Printer("CV32E40P_Printer", CV32E40P_InstrPrinterSet)
+SimpleRISCV_H_fw_DynBrPred_Printer::SimpleRISCV_H_fw_DynBrPred_Printer(): Printer("SimpleRISCV_H_fw_DynBrPred_Printer", SimpleRISCV_H_fw_DynBrPred_InstrPrinterSet)
 {}
 
-void CV32E40P_Printer::connectChannel(Channel* ch_)
+void SimpleRISCV_H_fw_DynBrPred_Printer::connectChannel(Channel* ch_)
 {
-  CV32E40P_Channel* channel = static_cast<CV32E40P_Channel*>(ch_);
+  SimpleRISCV_H_fw_DynBrPred_Channel* channel = static_cast<SimpleRISCV_H_fw_DynBrPred_Channel*>(ch_);
   
+  pc_ptr = channel->pc;
+  brTarget_ptr = channel->brTarget;
   rs1_ptr = channel->rs1;
   rs2_ptr = channel->rs2;
   rd_ptr = channel->rd;
-  pc_ptr = channel->pc;
-  brTarget_ptr = channel->brTarget;
-  rs2_data_ptr = channel->rs2_data;
 }
 
-std::string CV32E40P_Printer::getPrintHeader(void)
+std::string SimpleRISCV_H_fw_DynBrPred_Printer::getPrintHeader(void)
 {
   std::stringstream caption_strs;	
+  caption_strs << std::setfill(' ') << std::setw(18) << std::left << "pc" << " | ";
+  caption_strs << std::setfill(' ') << std::setw(18) << std::left << "brTarget" << " | ";
   caption_strs << std::setfill(' ') << std::setw(18) << std::left << "rs1" << " | ";
   caption_strs << std::setfill(' ') << std::setw(18) << std::left << "rs2" << " | ";
   caption_strs << std::setfill(' ') << std::setw(18) << std::left << "rd" << " | ";
-  caption_strs << std::setfill(' ') << std::setw(18) << std::left << "pc" << " | ";
-  caption_strs << std::setfill(' ') << std::setw(18) << std::left << "brTarget" << " | ";
-  caption_strs << std::setfill(' ') << std::setw(18) << std::left << "rs2_data" << " | ";
   caption_strs << std::endl;
 
   return caption_strs.str();
