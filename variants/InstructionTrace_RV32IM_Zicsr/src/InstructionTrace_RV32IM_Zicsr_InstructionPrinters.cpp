@@ -1,5 +1,5 @@
 /*
-* Copyright 2025 Chair of EDA, Technical University of Munich
+* Copyright 2026 Chair of EDA, Technical University of Munich
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ static InstructionPrinter *instrPrinter_Reg_Reg_Type = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1_data() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2_data() << " , ";
@@ -59,7 +59,7 @@ static InstructionPrinter *instrPrinter_Reg_Imm_Type = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_imm() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1_data() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
@@ -81,7 +81,7 @@ static InstructionPrinter *instrPrinter_Load_Type = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_imm() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1_data() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
@@ -103,7 +103,7 @@ static InstructionPrinter *instrPrinter_Store_Type = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_imm() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1_data() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2_data() << " , ";
@@ -125,7 +125,7 @@ static InstructionPrinter *instrPrinter_CSR_Type = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1_data() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
@@ -147,7 +147,7 @@ static InstructionPrinter *instrPrinter_CSR_Imm_Type = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_imm() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
@@ -169,7 +169,7 @@ static InstructionPrinter *instrPrinter_Branch_Type = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_imm() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1_data() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2_data() << " , ";
@@ -191,7 +191,7 @@ static InstructionPrinter *instrPrinter_RegLoad_Type = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_imm() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
@@ -213,7 +213,7 @@ static InstructionPrinter *instrPrinter__DEF = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
@@ -235,7 +235,7 @@ static InstructionPrinter *instrPrinter_JAL = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_imm() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";
@@ -257,7 +257,7 @@ static InstructionPrinter *instrPrinter_JALR = new InstructionPrinter(
     InstructionTrace_RV32IM_Zicsr_Printer* printer = static_cast<InstructionTrace_RV32IM_Zicsr_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_code() << " , ";
-    ret_strs << std::setfill(' ') << std::setw(50) << std::left << printer->get_assembly() << " , ";
+    ret_strs << std::setfill(' ') << std::setw(100) << std::left << printer->get_assembly() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_imm() << " , ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1_data() << " , ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " , ";

@@ -1,10 +1,10 @@
 
 TARGET_SOURCES(SWEVAL_BACKENDS_LIB PRIVATE
-  	src/SimpleRISCV_H_fw_DynBrPred_PerformanceModel.cpp
-	src/SimpleRISCV_H_fw_DynBrPred_SchedulingFunction.cpp
+  	src/SimpleRISCV_H_fw_DynBrPred_InstructionPrinters.cpp
+	src/SimpleRISCV_H_fw_DynBrPred_PerformanceModel.cpp
 	src/SimpleRISCV_H_fw_DynBrPred_Channel.cpp
+	src/SimpleRISCV_H_fw_DynBrPred_SchedulingFunction.cpp
 	src/SimpleRISCV_H_fw_DynBrPred_Printer.cpp
-	src/SimpleRISCV_H_fw_DynBrPred_InstructionPrinters.cpp
 
 )
 

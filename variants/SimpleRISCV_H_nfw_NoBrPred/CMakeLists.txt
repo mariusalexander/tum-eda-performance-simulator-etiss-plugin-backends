@@ -1,10 +1,10 @@
 
 TARGET_SOURCES(SWEVAL_BACKENDS_LIB PRIVATE
-  	src/SimpleRISCV_H_nfw_NoBrPred_PerformanceModel.cpp
-	src/SimpleRISCV_H_nfw_NoBrPred_SchedulingFunction.cpp
+  	src/SimpleRISCV_H_nfw_NoBrPred_SchedulingFunction.cpp
+	src/SimpleRISCV_H_nfw_NoBrPred_InstructionPrinters.cpp
+	src/SimpleRISCV_H_nfw_NoBrPred_PerformanceModel.cpp
 	src/SimpleRISCV_H_nfw_NoBrPred_Channel.cpp
 	src/SimpleRISCV_H_nfw_NoBrPred_Printer.cpp
-	src/SimpleRISCV_H_nfw_NoBrPred_InstructionPrinters.cpp
 
 )
 

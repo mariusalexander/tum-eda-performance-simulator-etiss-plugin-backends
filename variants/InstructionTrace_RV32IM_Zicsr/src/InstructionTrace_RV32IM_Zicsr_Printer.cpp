@@ -1,5 +1,5 @@
 /*
-* Copyright 2025 Chair of EDA, Technical University of Munich
+* Copyright 2026 Chair of EDA, Technical University of Munich
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ std::string InstructionTrace_RV32IM_Zicsr_Printer::getPrintHeader(void)
   std::stringstream caption_strs;	
   caption_strs << std::setfill(' ') << std::setw(18) << std::left << "pc" << " , ";
   caption_strs << std::setfill(' ') << std::setw(18) << std::left << "code" << " , ";
-  caption_strs << std::setfill(' ') << std::setw(50) << std::left << "assembly" << " , ";
+  caption_strs << std::setfill(' ') << std::setw(100) << std::left << "assembly" << " , ";
   caption_strs << std::setfill(' ') << std::setw(18) << std::left << "imm" << " , ";
   caption_strs << std::setfill(' ') << std::setw(18) << std::left << "rs1_data" << " , ";
   caption_strs << std::setfill(' ') << std::setw(18) << std::left << "rs2_data" << " , ";

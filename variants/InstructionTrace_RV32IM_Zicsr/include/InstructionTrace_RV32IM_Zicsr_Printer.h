@@ -1,5 +1,5 @@
 /*
-* Copyright 2025 Chair of EDA, Technical University of Munich
+* Copyright 2026 Chair of EDA, Technical University of Munich
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ private:
 
   int* pc_ptr;
   int* code_ptr;
-  char (*assembly_ptr)[50];
+  char (*assembly_ptr)[100];
   int* imm_ptr;
   int* rs1_data_ptr;
   int* rs2_data_ptr;

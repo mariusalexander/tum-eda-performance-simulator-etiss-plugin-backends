@@ -1,5 +1,5 @@
 /*
-* Copyright 2025 Chair of EDA, Technical University of Munich
+* Copyright 2026 Chair of EDA, Technical University of Munich
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public:
 
   int pc [100];
   int code [100];
-  char assembly [100] [50];
+  char assembly [100] [100];
   int imm [100];
   int rs1_data [100];
   int rs2_data [100];
