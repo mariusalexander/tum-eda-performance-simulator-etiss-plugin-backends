@@ -60,26 +60,10 @@ static InstructionPrinter *instrPrinter_sub = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_sll = new InstructionPrinter(
-  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "sll",
-  2,
-  [](Printer* printer_){
-    std::stringstream ret_strs;
-    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
-    ret_strs << std::endl;
-    return ret_strs.str();
-  }
-);
 static InstructionPrinter *instrPrinter_xor = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "xor",
-  3,
+  2,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -95,7 +79,7 @@ static InstructionPrinter *instrPrinter_xor = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_or = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "or",
-  4,
+  3,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -111,6 +95,22 @@ static InstructionPrinter *instrPrinter_or = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_and = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "and",
+  4,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_slt = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "slt",
   5,
   [](Printer* printer_){
     std::stringstream ret_strs;
@@ -124,9 +124,9 @@ static InstructionPrinter *instrPrinter_and = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_cadd = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_sltu = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "cadd",
+  "sltu",
   6,
   [](Printer* printer_){
     std::stringstream ret_strs;
@@ -140,9 +140,9 @@ static InstructionPrinter *instrPrinter_cadd = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_mul = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_sll = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "mul",
+  "sll",
   7,
   [](Printer* printer_){
     std::stringstream ret_strs;
@@ -156,10 +156,26 @@ static InstructionPrinter *instrPrinter_mul = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_rem = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_srl = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "rem",
+  "srl",
   8,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_sra = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "sra",
+  9,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -175,22 +191,6 @@ static InstructionPrinter *instrPrinter_rem = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_addi = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "addi",
-  9,
-  [](Printer* printer_){
-    std::stringstream ret_strs;
-    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
-    ret_strs << std::endl;
-    return ret_strs.str();
-  }
-);
-static InstructionPrinter *instrPrinter_sltiu = new InstructionPrinter(
-  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "sltiu",
   10,
   [](Printer* printer_){
     std::stringstream ret_strs;
@@ -252,9 +252,9 @@ static InstructionPrinter *instrPrinter_andi = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_caddi = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_slti = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "caddi",
+  "slti",
   14,
   [](Printer* printer_){
     std::stringstream ret_strs;
@@ -268,9 +268,9 @@ static InstructionPrinter *instrPrinter_caddi = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_cslli = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_sltiu = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "cslli",
+  "sltiu",
   15,
   [](Printer* printer_){
     std::stringstream ret_strs;
@@ -284,9 +284,9 @@ static InstructionPrinter *instrPrinter_cslli = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_caddi16sp = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_slli = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "caddi16sp",
+  "slli",
   16,
   [](Printer* printer_){
     std::stringstream ret_strs;
@@ -300,26 +300,282 @@ static InstructionPrinter *instrPrinter_caddi16sp = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_cmv = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_srli = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "cmv",
+  "srli",
   17,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_srai = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "srai",
+  18,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_auipc = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "auipc",
+  19,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_lui = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "lui",
+  20,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_mul = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "mul",
+  21,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
     ret_strs << std::endl;
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_cli = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_mulh = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "cli",
-  18,
+  "mulh",
+  22,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_mulhu = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "mulhu",
+  23,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_mulhsu = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "mulhsu",
+  24,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_div = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "div",
+  25,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_rem = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "rem",
+  26,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_divu = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "divu",
+  27,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_remu = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "remu",
+  28,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_csrrw = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "csrrw",
+  29,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_csrrs = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "csrrs",
+  30,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_csrrc = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "csrrc",
+  31,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_csrrwi = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "csrrwi",
+  32,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_csrrsi = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "csrrsi",
+  33,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_csrrci = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "csrrci",
+  34,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -335,7 +591,7 @@ static InstructionPrinter *instrPrinter_cli = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_sb = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "sb",
-  19,
+  35,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -351,7 +607,7 @@ static InstructionPrinter *instrPrinter_sb = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_sh = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "sh",
-  20,
+  36,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -367,7 +623,7 @@ static InstructionPrinter *instrPrinter_sh = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_sw = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "sw",
-  21,
+  37,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -376,38 +632,6 @@ static InstructionPrinter *instrPrinter_sw = new InstructionPrinter(
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << std::endl;
-    return ret_strs.str();
-  }
-);
-static InstructionPrinter *instrPrinter_csw = new InstructionPrinter(
-  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "csw",
-  22,
-  [](Printer* printer_){
-    std::stringstream ret_strs;
-    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs2() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << std::endl;
-    return ret_strs.str();
-  }
-);
-static InstructionPrinter *instrPrinter_lh = new InstructionPrinter(
-  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "lh",
-  23,
-  [](Printer* printer_){
-    std::stringstream ret_strs;
-    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
     ret_strs << std::endl;
     return ret_strs.str();
   }
@@ -415,7 +639,7 @@ static InstructionPrinter *instrPrinter_lh = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_lw = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "lw",
-  24,
+  38,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -428,10 +652,10 @@ static InstructionPrinter *instrPrinter_lw = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_lbu = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_lh = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "lbu",
-  25,
+  "lh",
+  39,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -447,7 +671,7 @@ static InstructionPrinter *instrPrinter_lbu = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_lhu = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "lhu",
-  26,
+  40,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -460,10 +684,26 @@ static InstructionPrinter *instrPrinter_lhu = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_clw = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_lb = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "clw",
-  27,
+  "lb",
+  41,
+  [](Printer* printer_){
+    std::stringstream ret_strs;
+    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
+    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
+    ret_strs << std::endl;
+    return ret_strs.str();
+  }
+);
+static InstructionPrinter *instrPrinter_lbu = new InstructionPrinter(
+  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
+  "lbu",
+  42,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -479,7 +719,7 @@ static InstructionPrinter *instrPrinter_clw = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_beq = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "beq",
-  28,
+  43,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -495,7 +735,7 @@ static InstructionPrinter *instrPrinter_beq = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_bne = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "bne",
-  29,
+  44,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -511,7 +751,7 @@ static InstructionPrinter *instrPrinter_bne = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_blt = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "blt",
-  30,
+  45,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -527,7 +767,7 @@ static InstructionPrinter *instrPrinter_blt = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_bge = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "bge",
-  31,
+  46,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -543,7 +783,7 @@ static InstructionPrinter *instrPrinter_bge = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_bltu = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "bltu",
-  32,
+  47,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -559,7 +799,7 @@ static InstructionPrinter *instrPrinter_bltu = new InstructionPrinter(
 static InstructionPrinter *instrPrinter_bgeu = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "bgeu",
-  33,
+  48,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -572,42 +812,10 @@ static InstructionPrinter *instrPrinter_bgeu = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_cbeqz = new InstructionPrinter(
-  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "cbeqz",
-  34,
-  [](Printer* printer_){
-    std::stringstream ret_strs;
-    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_brTarget() << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << std::endl;
-    return ret_strs.str();
-  }
-);
-static InstructionPrinter *instrPrinter_cbnez = new InstructionPrinter(
-  SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "cbnez",
-  35,
-  [](Printer* printer_){
-    std::stringstream ret_strs;
-    SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_brTarget() << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << std::endl;
-    return ret_strs.str();
-  }
-);
 static InstructionPrinter *instrPrinter__def = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
   "_def",
-  36,
+  49,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
@@ -620,31 +828,31 @@ static InstructionPrinter *instrPrinter__def = new InstructionPrinter(
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_lb = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_jal = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "lb",
-  37,
+  "jal",
+  50,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_brTarget() << " | ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
-    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";
     ret_strs << std::endl;
     return ret_strs.str();
   }
 );
-static InstructionPrinter *instrPrinter_slti = new InstructionPrinter(
+static InstructionPrinter *instrPrinter_jalr = new InstructionPrinter(
   SimpleRISCV_H_nfw_StaBrPred_InstrPrinterSet,
-  "slti",
-  38,
+  "jalr",
+  51,
   [](Printer* printer_){
     std::stringstream ret_strs;
     SimpleRISCV_H_nfw_StaBrPred_Printer* printer = static_cast<SimpleRISCV_H_nfw_StaBrPred_Printer*>(printer_);
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_pc() << " | ";
-    ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
+    ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_brTarget() << " | ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rs1() << " | ";
     ret_strs << std::setfill('-') << std::setw(18) << "" << " | ";
     ret_strs << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << printer->get_rd() << " | ";

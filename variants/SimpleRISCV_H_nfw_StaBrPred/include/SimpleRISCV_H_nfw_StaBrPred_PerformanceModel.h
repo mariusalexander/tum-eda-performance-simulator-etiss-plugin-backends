@@ -29,8 +29,6 @@
 
 #include "models/common/StaticBranchPredictModel.h"
 #include "models/common/StandardRegisterModel.h"
-#include "models/common/DummyMemoryModel.h"
-#include "models/common/DummyMemoryModel.h"
 
 namespace SimpleRISCV_H_nfw_StaBrPred{
 
@@ -43,8 +41,6 @@ public:
   SimpleRISCV_H_nfw_StaBrPred_PerformanceModel() : PerformanceModel("SimpleRISCV_H_nfw_StaBrPred", SimpleRISCV_H_nfw_StaBrPred_SchedulingFunctionSet)
     ,staBranchPredModel(this)
     ,regModel(this)
-    ,iMemModel(this)
-    ,dMemModel(this)
   {};
 
   // Entrance-point "timing variable" (only used for info-stream)
@@ -61,8 +57,6 @@ public:
   // External Resource Models
   common::StaticBranchPredictModel staBranchPredModel;
   common::StandardRegisterModel regModel;
-  common::DummyMemoryModel iMemModel;
-  common::DummyMemoryModel dMemModel;
 
   virtual void connectChannel(Channel*);
   virtual uint64_t getCycleCount(void);

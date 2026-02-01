@@ -1,10 +1,10 @@
 
 TARGET_SOURCES(SWEVAL_BACKENDS_LIB PRIVATE
-  	src/SimpleRISCV_H_fw_StaBrPred_Channel.cpp
-	src/SimpleRISCV_H_fw_StaBrPred_InstructionPrinters.cpp
-	src/SimpleRISCV_H_fw_StaBrPred_PerformanceModel.cpp
-	src/SimpleRISCV_H_fw_StaBrPred_Printer.cpp
+  	src/SimpleRISCV_H_fw_StaBrPred_PerformanceModel.cpp
 	src/SimpleRISCV_H_fw_StaBrPred_SchedulingFunction.cpp
+	src/SimpleRISCV_H_fw_StaBrPred_Channel.cpp
+	src/SimpleRISCV_H_fw_StaBrPred_Printer.cpp
+	src/SimpleRISCV_H_fw_StaBrPred_InstructionPrinters.cpp
 
 )
 

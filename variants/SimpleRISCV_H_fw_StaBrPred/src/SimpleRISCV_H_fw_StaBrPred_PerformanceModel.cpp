@@ -30,8 +30,6 @@
 
 #include "models/common/StaticBranchPredictModel.h"
 #include "models/common/StandardRegisterModel.h"
-#include "models/common/DummyMemoryModel.h"
-#include "models/common/DummyMemoryModel.h"
 
 namespace SimpleRISCV_H_fw_StaBrPred{
 
@@ -45,8 +43,6 @@ void SimpleRISCV_H_fw_StaBrPred_PerformanceModel::connectChannel(Channel* channe
   regModel.rs1_ptr = channel->rs1;
   regModel.rs2_ptr = channel->rs2;
   regModel.rd_ptr = channel->rd;
-
-
 
 }
 
