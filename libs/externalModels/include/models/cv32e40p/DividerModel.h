@@ -32,8 +32,13 @@ public:
   
   int getDelay(void);
 
+  // Tracing API
+  std::string getInfoHeader();
+  std::string getInfoStream();
+
 private:
   int findReverseOneIndex(uint64_t);
+  bool triggered = false;
 };
 
 } // namespace cv32e40p

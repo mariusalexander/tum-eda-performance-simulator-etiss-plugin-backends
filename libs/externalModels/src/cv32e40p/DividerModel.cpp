@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <stdbool.h>
+#include <sstream>
 
 namespace cv32e40p{
 
@@ -44,7 +45,7 @@ int DividerModel::getDelay(void)
   }
   delay += (sign) ? 0 : 1;
   delay += 3;
-  
+  triggered = true;
   return delay;
 }
 
@@ -63,5 +64,24 @@ int DividerModel::findReverseOneIndex(uint64_t op_)
   }
   return (31 - index);
 }
+
+std::string DividerModel::getInfoHeader()
+{
+  static std::string header{"DIV_delay"};
+  return header;
+}
+
+std::string DividerModel::getInfoStream()
+{
+  if (triggered) {
+     auto s = std::to_string(getDelay());
+     triggered = false;
+     return s;
+  }
+  else {
+    static std::string na{"-"};
+    return na;
+  }
+} 
 
 } // namespace cv32e40p
