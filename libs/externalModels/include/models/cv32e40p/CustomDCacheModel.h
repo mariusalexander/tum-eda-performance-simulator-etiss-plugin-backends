@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-// TODO: Proof-of-concept model, taken from Robert (more or less)!
-
-#ifndef CV32E40P_D_CACHE_MODEL_H
-#define CV32E40P_D_CACHE_MODEL_H
+#ifndef CV32E40P_CUSTOM_D_CACHE_MODEL_H
+#define CV32E40P_CUSTOM_D_CACHE_MODEL_H
 
 #include <stdbool.h>
 #include <cstdint>
 #include <string>
+#include <cassert>
+#include <cmath>
 
 #include "PerformanceModel.h"
 
@@ -36,44 +36,102 @@ struct DCacheEntry
 class CustomDCacheModel : public ResourceModel
 {
     constexpr static unsigned WAYS=1;
-    constexpr static unsigned ROWS=64; 
+    constexpr static unsigned ROWS=32;
+    constexpr static unsigned CACHE_DELAY=1;
+    constexpr static unsigned MEMORY_DELAY=7;
+
 public:
 
-  // TODO: Check if delays are matching observations!
-  CustomDCacheModel(PerformanceModel* parent_) : ResourceModel("ICacheModel", parent_), CACHE_DELAY(1), MEMORY_DELAY(7), NOT_CACHABLE_DELAY(7) {};
-  virtual int getDelay(void);
+    CustomDCacheModel(PerformanceModel* parent_) :
+        ResourceModel("CustomDCacheModel", parent_)
+    {};
 
-  // Tracing API
-  std::string getInfoHeader();
-  std::string getInfoStream();
-  
-  // Trace value
-  uint64_t* addr_ptr;
-  
+    int getDelay(void) override
+    {
+        uint64_t addr = addr_ptr[getInstrIndex()];
+
+        isMiss = !inCache(addr);
+
+        if(isMiss)
+        {
+            return MEMORY_DELAY;
+        }
+        return CACHE_DELAY;
+    }
+
+    std::string getInfoHeader(void) { return {}; }
+    std::string getInfoStream(void) { return {}; }
+
+    // Trace value
+    uint64_t* addr_ptr;
+
 private:
 
-  // Cache state
-  DCacheEntry tag_cache[WAYS][ROWS];
-  
-  // Support functions
-  bool inCache(uint64_t);
-  bool cachable(uint64_t addr_) { return true; };
-  void updateCache(uint64_t, uint64_t);
-  int lfsr(void);
+    // Cache state
+    DCacheEntry tag_cache[WAYS][ROWS];
 
-  // Miss flag. Currently only used for info print
-  bool isMiss = false;
-  
-  // Constants
-  const int CACHE_DELAY;
-  const int MEMORY_DELAY;
-  const int NOT_CACHABLE_DELAY;
+    // Miss flag. Currently only used for info print
+    bool isMiss = false;
 
+    // Support functions
+    bool inCache(uint64_t addr_)
+    {
+        constexpr uint64_t offsetBits = ceil(log2(32 / 8)) +  // offset to index byte in a word
+                                        ceil(log2(4));        // offset to index word in a cache line
+        constexpr uint64_t indexBits  = ceil(log2(ROWS));     // index for blocks
+
+        uint64_t tag = addr_ >> (offsetBits + indexBits);
+        uint64_t index = (addr_ >> offsetBits) & ~(tag << indexBits);
+
+        for(int way_i=0; way_i<WAYS; way_i++)
+        {
+            assert(way_i < int(WAYS) && "ways!");
+            assert(index < int(ROWS) && "rows!");
+            if(tag_cache[way_i][index].tag == tag)
+            {
+                // Cache hit
+                return true;
+            }
+        }
+
+        // Cache miss
+        updateCache(tag, index);
+        return false;
+    }
+
+    void updateCache(uint64_t tag_, uint64_t index_)
+    {
+        int way = -1;
+
+        for(int i=0; i<WAYS; i++)
+        {
+            if(!tag_cache[i][index_].valid)
+            {
+                way = i;
+                break;
+            }
+        }
+
+        if(way == -1)
+        {
+            way = replacement();
+        }
+
+        assert(way < int(WAYS) && "ways!");
+        assert(index_ < int(ROWS) && "rows!");
+
+        tag_cache[way][index_].tag = tag_;
+        tag_cache[way][index_].valid = true;
+    }
+
+    int replacement(void)
+    {
+        static uint8_t shift_state = 0;
+        shift_state = (shift_state + 1) % WAYS;
+        return shift_state;
+    }
 };
 
-//CustomDCacheModel::WAYS=2;
-//CustomDCacheModel::ROWS=64;
-
 } // namespace cv32e40p
-  
-#endif // CV32E40P_D_CACHE_MODEL_H
+
+#endif // CV32E40P_CUSTOM_D_CACHE_MODEL_H

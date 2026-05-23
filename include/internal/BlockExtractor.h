@@ -40,19 +40,18 @@ public:
         id(id_),
         pc(pc_),
         blockInstrGen(blockInstrGen_)
-    {};
-    ~Block() {};
+    {}
 
     void appendInstr(uint64_t typeId_, Channel* channel_, uint64_t pc, uint64_t instrIdx_) {
         instrVector.push_back(blockInstrGen.getCtor(typeId_)(channel_, instrIdx_));
-    };
+    }
 
-    void increaseCallCnt(void) { callCnt++; };
-    int getId(void) const { return id; };
-    uint64_t getPc(void) const { return pc; };
-    uint64_t getFinalPc(void) const { return finalPc; };
-    int getCallCnt(void) const {return callCnt; };
-    const std::vector<std::unique_ptr<BlockInstruction>>& getInstrVector(void) const { return instrVector; };
+    void increaseCallCnt(void) { callCnt++; }
+    int getId(void) const { return id; }
+    uint64_t getPc(void) const { return pc; }
+    uint64_t getFinalPc(void) const { return finalPc; }
+    int getCallCnt(void) const {return callCnt; }
+    const std::vector<std::unique_ptr<BlockInstruction>>& getInstrVector(void) const { return instrVector; }
 
     bool checkEnd(uint64_t pc_) {
         if(instrVector.back()->isBranchInstr()){
@@ -60,10 +59,15 @@ public:
             return true;
         }
         return false;
-    };
+    }
     void forceEnd(uint64_t pc_) {
         finalPc = pc_;
     }
+
+    bool usesICache(uint64_t pc_) { return instrVector.at((pc_ - pc) >> 2)->usesICache(); }
+    bool usesDCache(uint64_t pc_) { return instrVector.at((pc_ - pc) >> 2)->usesDCache(); }
+    bool usesDiv(uint64_t pc_)    { return instrVector.at((pc_ - pc) >> 2)->usesDiv();    }
+    bool usesDivU(uint64_t pc_)   { return instrVector.at((pc_ - pc) >> 2)->usesDivU();   }
 
 private:
     int id;
@@ -106,9 +110,31 @@ private:
     int uniqueBlockCnt = 0;
     uint64_t lastPc = 0;
 
-    std::unordered_map<uint64_t, std::unique_ptr<Block_Extractor::Block>> blockMap;
-    Block_Extractor::Block* curBlock;
+    struct DynamicData {
+        struct Entry{
+            uint64_t count = 0;
+            int      value = 0;
+        };
 
+        static void update(std::vector<Entry>& delays, int delay) {
+            for (auto& entry : delays) {
+                if (entry.value == delay) {
+                    entry.count += 1;
+                    return;
+                }
+            }
+            delays.push_back(Entry{1, delay});
+        }
+
+        std::vector<Entry> iCacheDelays;
+        std::vector<Entry> dCacheDelays;
+        std::vector<Entry> divDelays;
+        std::vector<Entry> divUDelays;
+    };
+
+    std::unordered_map<uint64_t, Block_Extractor::Block> blockMap;
+    std::unordered_map<uint64_t, DynamicData> dynamicData;
+    Block_Extractor::Block* curBlock;
 };
 
 #endif // SWEVAL_BACKENDS_BLOCK_EXTRACTOR_H

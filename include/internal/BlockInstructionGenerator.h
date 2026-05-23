@@ -29,15 +29,25 @@
 class BlockInstruction{
 
 public:
-    BlockInstruction(Channel* channel_, uint64_t instrCnt_) { typeId = channel_->typeId[instrCnt_]; };
+    BlockInstruction(Channel* channel_, uint64_t instrCnt_) { typeId = channel_->typeId[instrCnt_]; }
     virtual ~BlockInstruction() = default;
 
-    bool isBranchInstr(void) { return isBranch; };
-    virtual std::string getJsonStr(std::string) = 0;
+    bool isBranchInstr(void) { return isBranch; }
+    bool usesICache(void) { return _usesICache; }
+    bool usesDCache(void) { return _usesDCache; }
+    bool usesDiv(void) { return _usesDiv; }
+    bool usesDivU(void) { return _usesDivU; }
+
+    virtual std::string getJsonStr() = 0;
 
 protected:
+
     uint64_t typeId;
-    bool isBranch = false;
+    bool isBranch   = false;
+    bool _usesICache = false;
+    bool _usesDCache = false;
+    bool _usesDiv    = false;
+    bool _usesDivU   = false;
 };
 
 class BlockInstructionGenerator{
